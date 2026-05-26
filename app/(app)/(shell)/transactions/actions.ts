@@ -13,6 +13,10 @@ import {
   insertTransaction,
   updateTransaction,
 } from "@/lib/db/transactions";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listAccounts } from "@/lib/db/accounts";
+import { listCategories } from "@/lib/db/categories";
+import { parseImportBuffer } from "@/lib/excel/transactions";
 import {
   createTransactionSchema,
   updateTransactionSchema,
@@ -22,6 +26,11 @@ import {
 export type ActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+export type ImportResult =
+  | { ok: "idle" }
+  | { ok: true; inserted: number; skipped: number; errors: { row: number; message: string }[] }
+  | { ok: false; error: string };
 
 function fieldErrorsOf(err: ZodError): Record<string, string> {
   const out: Record<string, string> = {};
@@ -158,4 +167,99 @@ export async function deleteTransactionAction(
 
   revalidatePath("/transactions");
   redirect("/transactions");
+}
+
+// ── Importação em massa ───────────────────────────────────────────────────────
+
+export async function importTransactionsAction(
+  prev: ImportResult,
+  formData: FormData,
+): Promise<ImportResult> {
+  const user = await getUserOrRedirect();
+  const company = await getActiveCompanyOrRedirect();
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0)
+    return { ok: false, error: "Nenhum arquivo selecionado." };
+  if (!file.name.match(/\.(xlsx|xls)$/i))
+    return { ok: false, error: "Formato inválido. Envie um arquivo .xlsx ou .xls." };
+  if (file.size > 5 * 1024 * 1024)
+    return { ok: false, error: "Arquivo muito grande. Limite de 5 MB." };
+
+  const buffer = await file.arrayBuffer();
+  const { rows: parsedRows, errors: parseErrors } = parseImportBuffer(buffer);
+
+  if (parsedRows.length === 0 && parseErrors.length === 0)
+    return { ok: false, error: "Planilha sem dados. Verifique o arquivo." };
+
+  const [accounts, categories] = await Promise.all([
+    listAccounts({ includeArchived: false }),
+    listCategories({ includeArchived: false }),
+  ]);
+
+  const accountByName = new Map(
+    accounts.map((a) => [a.name.trim().toLowerCase(), a]),
+  );
+  const categoryByName = new Map(
+    categories.map((c) => [c.name.trim().toLowerCase(), c]),
+  );
+
+  type TxInsert = {
+    company_id: string;
+    account_id: string;
+    category_id: string | null;
+    type: "income" | "expense";
+    amount: string;
+    description: string | null;
+    occurred_on: string;
+    created_by: string;
+  };
+
+  const toInsert: TxInsert[] = [];
+  const rowErrors: { row: number; message: string }[] = [...parseErrors];
+
+  for (const pr of parsedRows) {
+    const account = accountByName.get(pr.accountName.toLowerCase());
+    if (!account) {
+      rowErrors.push({ row: 0, message: `Conta não encontrada: "${pr.accountName}"` });
+      continue;
+    }
+    const category = pr.categoryName
+      ? categoryByName.get(pr.categoryName.toLowerCase())
+      : undefined;
+    if (pr.categoryName && !category) {
+      rowErrors.push({
+        row: 0,
+        message: `Categoria não encontrada: "${pr.categoryName}" — importado sem categoria.`,
+      });
+    }
+    toInsert.push({
+      company_id: company.id,
+      account_id: account.id,
+      category_id: category?.id ?? null,
+      type: pr.type,
+      amount: pr.amount,
+      description: pr.description,
+      occurred_on: pr.occurred_on,
+      created_by: user.id,
+    });
+  }
+
+  let inserted = 0;
+  if (toInsert.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.from("transactions").insert(toInsert);
+    if (error) return { ok: false, error: "Erro ao gravar no banco. Tente novamente." };
+    inserted = toInsert.length;
+  }
+
+  revalidatePath("/transactions");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    inserted,
+    skipped: parsedRows.length - inserted + parseErrors.length,
+    errors: rowErrors,
+  };
 }

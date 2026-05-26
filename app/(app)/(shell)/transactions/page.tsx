@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Download, Upload } from "lucide-react";
 
 export const metadata: Metadata = { title: "Movimentações — FinanceFlow" };
 import { buttonVariants } from "@/components/ui/button";
@@ -103,6 +103,25 @@ export default async function TransactionsPage({
           )}
         >
           <ChevronRight className="size-5" />
+        </Link>
+      </div>
+
+      {/* Ações secundárias — exportar / importar */}
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-b border-border bg-background">
+        <a
+          href={`/api/transactions/export?mes=${mes}`}
+          download
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Download className="size-3.5" />
+          Exportar
+        </a>
+        <Link
+          href="/transactions/import"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Upload className="size-3.5" />
+          Importar
         </Link>
       </div>
 
