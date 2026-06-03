@@ -52,7 +52,7 @@ export function BottomNav() {
       aria-label="Navegação principal"
       className="sticky bottom-0 z-30 pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="mx-3 mb-3 flex items-stretch gap-1 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <ul className="mx-auto mb-3 w-[min(100%-1.5rem,28rem)] flex items-stretch gap-1 rounded-2xl border border-border bg-background/95 p-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;

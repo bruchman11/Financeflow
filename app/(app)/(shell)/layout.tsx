@@ -17,7 +17,7 @@ export default async function ShellLayout({
   const company = await getActiveCompanyOrRedirect();
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full max-w-md mx-auto">
+    <div className="flex-1 flex flex-col min-h-0 w-full max-w-4xl mx-auto">
       <AppHeader company={company} />
       <div className="flex-1 flex flex-col min-h-0">{children}</div>
       <BottomNav />
