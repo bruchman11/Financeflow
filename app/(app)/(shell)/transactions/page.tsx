@@ -311,7 +311,7 @@ export default async function TransactionsPage({
         aria-label="Nova movimentação"
         className={buttonVariants({
           className:
-            "fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-4 size-14 rounded-full shadow-lg !p-0 flex items-center justify-center",
+            "fixed bottom-[calc(96px+env(safe-area-inset-bottom))] right-4 size-14 rounded-full shadow-lg !p-0 flex items-center justify-center",
         })}
       >
         <Plus className="size-6" />

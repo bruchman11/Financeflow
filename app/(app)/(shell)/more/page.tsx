@@ -1,11 +1,12 @@
 import {
-  BarChart3,
+  Calendar,
   CreditCard,
   FileText,
   LogOut,
   Receipt,
   Repeat2,
   Tags,
+  Wallet,
 } from "lucide-react";
 import { getUserOrRedirect } from "@/lib/auth/current";
 import { clearActiveCompanyAction } from "@/app/(app)/companies/actions";
@@ -25,6 +26,8 @@ export default async function MorePage() {
       <PageHeader eyebrow="Configurações" title="Mais" className="px-2" />
 
       <section className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        <LinkRow href="/accounts" icon={Wallet} label="Contas" />
+        <LinkRow href="/calendar" icon={Calendar} label="Agenda" />
         <LinkRow href="/fixed-expenses" icon={Receipt} label="Despesas fixas" />
         <LinkRow
           href="/credit-cards"
@@ -32,7 +35,6 @@ export default async function MorePage() {
           label="Cartões de crédito"
         />
         <LinkRow href="/bills" icon={FileText} label="Boletos" />
-        <LinkRow href="/reports" icon={BarChart3} label="Relatórios" />
         <LinkRow href="/categories" icon={Tags} label="Categorias" />
         <form action={clearActiveCompanyAction}>
           <button

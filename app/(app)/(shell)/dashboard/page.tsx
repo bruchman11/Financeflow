@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Wallet, Plus, ArrowRight } from "lucide-react";
+import {
+  Wallet,
+  Plus,
+  ArrowRight,
+  FileText,
+  CreditCard,
+  Receipt,
+  Calendar,
+} from "lucide-react";
 
 export const metadata: Metadata = { title: "Início — FinanceFlow" };
 import { getActiveCompanyOrRedirect } from "@/lib/auth/current";
@@ -25,6 +33,13 @@ function currentMonthLabel(): string {
   }).format(new Date());
 }
 
+const quickActions = [
+  { href: "/bills", label: "Boletos", icon: FileText },
+  { href: "/credit-cards", label: "Cartões", icon: CreditCard },
+  { href: "/fixed-expenses", label: "Desp. fixas", icon: Receipt },
+  { href: "/calendar", label: "Agenda", icon: Calendar },
+];
+
 export default async function DashboardPage() {
   const company = await getActiveCompanyOrRedirect();
 
@@ -39,6 +54,10 @@ export default async function DashboardPage() {
     ]);
 
   const recentTxs = recent.rows;
+  const totalBalance = accountBalances.reduce(
+    (sum, a) => sum + a.currentBalance,
+    0,
+  );
 
   return (
     <main className="flex-1 flex flex-col px-4 py-5 gap-6 pb-6">
@@ -48,6 +67,26 @@ export default async function DashboardPage() {
         title={company.name}
         subtitle={currentMonthLabel()}
       />
+
+      {/* KPI — saldo total em contas */}
+      {accountBalances.length > 0 ? (
+        <section
+          aria-labelledby="total-balance-heading"
+          className="rounded-xl border border-border bg-card px-4 py-4"
+        >
+          <h2
+            id="total-balance-heading"
+            className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
+          >
+            Saldo total em contas
+          </h2>
+          <Amount
+            value={totalBalance}
+            tone="account"
+            className="text-3xl font-bold"
+          />
+        </section>
+      ) : null}
 
       {/* Resumo do mês */}
       <section aria-labelledby="summary-heading">
@@ -80,6 +119,31 @@ export default async function DashboardPage() {
             </span>
             <Amount value={balance} tone="result" className="text-base font-bold" />
           </div>
+        </div>
+      </section>
+
+      {/* Ações rápidas */}
+      <section aria-labelledby="quick-heading">
+        <h2
+          id="quick-heading"
+          className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-0.5"
+        >
+          Ações rápidas
+        </h2>
+        <div className="grid grid-cols-4 gap-2">
+          {quickActions.map((q) => {
+            const Icon = q.icon;
+            return (
+              <Link
+                key={q.href}
+                href={q.href}
+                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card min-h-[64px] py-3 text-[11px] font-medium text-center hover:bg-muted transition-colors"
+              >
+                <Icon className="size-5 text-muted-foreground" aria-hidden />
+                <span className="leading-tight">{q.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
