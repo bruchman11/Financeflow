@@ -3,39 +3,26 @@ import Link from "next/link";
 import { Plus, Download, Upload, Receipt } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MonthNav } from "@/components/shell/MonthNav";
 import { listAccounts } from "@/lib/db/accounts";
 import { listCategories } from "@/lib/db/categories";
 import {
   getTransactionsSummary,
   listTransactionsPage,
-  type TransactionFilters,
+  type TransactionFilters as DbFilters,
   type TransactionRegime,
 } from "@/lib/db/transactions";
 import { formatBRL } from "@/lib/format/currency";
-import { formatBR } from "@/lib/format/date";
-import {
-  adjacentMonth,
-  currentYearMonth,
-  monthLabel,
-  monthRange,
-} from "@/lib/format/month";
+import { currentYearMonth, monthRange } from "@/lib/format/month";
 import { Amount } from "@/components/ui/amount";
-import {
-  FiltersDrawer,
-  type FiltersState,
-} from "@/components/filters/FiltersDrawer";
-import { FilterChip } from "@/components/filters/FilterChip";
+import type { FiltersState } from "@/components/filters/FiltersDrawer";
+import { TransactionFilters } from "@/components/filters/TransactionFilters";
 import { TransactionsList } from "./TransactionsList";
 
 const PAGE_SIZE = 25;
 
 export const metadata: Metadata = { title: "Movimentações — FinanceFlow" };
 
-// ── helpers de URL ────────────────────────────────────────────────────────────
-
 type RawSearchParams = {
-  mes?: string;
   from?: string;
   to?: string;
   account?: string;
@@ -45,14 +32,6 @@ type RawSearchParams = {
   q?: string;
 };
 
-function buildHref(base: string, params: Record<string, string>): string {
-  const entries = Object.entries(params).filter(([, v]) => v !== "");
-  if (entries.length === 0) return base;
-  return `${base}?${new URLSearchParams(entries).toString()}`;
-}
-
-// ── página ────────────────────────────────────────────────────────────────────
-
 export default async function TransactionsPage({
   searchParams,
 }: {
@@ -60,11 +39,7 @@ export default async function TransactionsPage({
 }) {
   const sp = await searchParams;
 
-  const defaultMes = currentYearMonth();
-  const mes =
-    /^\d{4}-\d{2}$/.test(sp.mes ?? "") ? (sp.mes as string) : defaultMes;
-
-  // Filtros aplicados
+  // Estado da listagem derivado APENAS dos filtros da URL.
   const filters: FiltersState = {
     from: /^\d{4}-\d{2}-\d{2}$/.test(sp.from ?? "") ? sp.from! : "",
     to: /^\d{4}-\d{2}-\d{2}$/.test(sp.to ?? "") ? sp.to! : "",
@@ -78,16 +53,15 @@ export default async function TransactionsPage({
     q: sp.q ?? "",
   };
 
-  // Período efetivo: from/to manuais > mês corrente
+  // Período: from/to manuais > mês corrente (padrão quando sem filtro).
   const usesCustomPeriod = Boolean(filters.from && filters.to);
   const { from, to } = usesCustomPeriod
     ? { from: filters.from, to: filters.to }
-    : monthRange(mes);
+    : monthRange(currentYearMonth());
 
   const regime: TransactionRegime = filters.regime;
 
-  // Dados em paralelo: transações + accounts + categories
-  const dbFilters: TransactionFilters = {
+  const dbFilters: DbFilters = {
     from,
     to,
     regime,
@@ -97,7 +71,6 @@ export default async function TransactionsPage({
     q: filters.q || null,
   };
 
-  // Resumo agregado (independente da paginação) + primeira página
   const [summary, firstPage, accounts, categories] = await Promise.all([
     getTransactionsSummary(dbFilters),
     listTransactionsPage({ ...dbFilters, pageSize: PAGE_SIZE }),
@@ -107,149 +80,51 @@ export default async function TransactionsPage({
 
   const { totalIncome, totalExpense, balance } = summary;
 
-  // Mapas para resolver nomes nos chips
-  const accountById = new Map(accounts.map((a) => [a.id, a]));
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
-
-  const prevMes = adjacentMonth(mes, -1);
-  const nextMes = adjacentMonth(mes, 1);
-  const isCurrentMonth = mes === defaultMes;
-
-  // Conta filtros ativos (excluindo mes + regime cash padrão)
-  const activeFilters: { key: string; label: string; removeHref: string }[] = [];
-  const currentParams: Record<string, string> = {
-    mes,
-    from: filters.from,
-    to: filters.to,
-    account: filters.accountId,
-    category: filters.categoryId,
-    type: filters.type,
-    regime: filters.regime === "accrual" ? "accrual" : "",
-    q: filters.q,
-  };
-  const withoutMes = !usesCustomPeriod
-    ? currentParams
-    : { ...currentParams, mes: "" };
-
-  if (usesCustomPeriod) {
-    activeFilters.push({
-      key: "period",
-      label: `${formatBR(filters.from)} → ${formatBR(filters.to)}`,
-      removeHref: buildHref("/transactions", {
-        ...withoutMes,
-        mes,
-        from: "",
-        to: "",
-      }),
-    });
-  }
-  if (filters.accountId) {
-    const acc = accountById.get(filters.accountId);
-    activeFilters.push({
-      key: "account",
-      label: `Conta: ${acc?.name ?? "?"}`,
-      removeHref: buildHref("/transactions", { ...currentParams, account: "" }),
-    });
-  }
-  if (filters.categoryId) {
-    const cat = categoryById.get(filters.categoryId);
-    activeFilters.push({
-      key: "category",
-      label: `${cat?.code ?? ""} ${cat?.name ?? ""}`.trim() || "Categoria",
-      removeHref: buildHref("/transactions", {
-        ...currentParams,
-        category: "",
-      }),
-    });
-  }
-  if (filters.type) {
-    activeFilters.push({
-      key: "type",
-      label: filters.type === "income" ? "Entrada" : "Saída",
-      removeHref: buildHref("/transactions", { ...currentParams, type: "" }),
-    });
-  }
-  if (filters.regime === "accrual") {
-    activeFilters.push({
-      key: "regime",
-      label: "Competência",
-      removeHref: buildHref("/transactions", {
-        ...currentParams,
-        regime: "",
-      }),
-    });
-  }
-  if (filters.q) {
-    activeFilters.push({
-      key: "q",
-      label: `"${filters.q}"`,
-      removeHref: buildHref("/transactions", { ...currentParams, q: "" }),
-    });
-  }
+  const hasActiveFilters = Boolean(
+    filters.from ||
+      filters.to ||
+      filters.accountId ||
+      filters.categoryId ||
+      filters.type ||
+      filters.q ||
+      filters.regime === "accrual",
+  );
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
-      {/* Navegação de mês (só quando não tem período custom) */}
-      {!usesCustomPeriod ? (
-        <MonthNav
-          label={monthLabel(mes)}
-          prevHref={buildHref("/transactions", { ...currentParams, mes: prevMes })}
-          nextHref={buildHref("/transactions", { ...currentParams, mes: nextMes })}
-          nextDisabled={isCurrentMonth}
-          sticky
-        />
-      ) : (
-        <div className="px-4 py-3 border-b border-border bg-background sticky top-0 z-10 text-center">
-          <span className="text-sm font-semibold">
-            {formatBR(from)} — {formatBR(to)}
-          </span>
-        </div>
-      )}
+      {/* Filtros inline */}
+      <TransactionFilters
+        basePath="/transactions"
+        filters={filters}
+        accounts={accounts.map((a) => ({ id: a.id, name: a.name }))}
+        categories={categories.map((c) => ({
+          id: c.id,
+          code: c.code,
+          name: c.name,
+          level: c.level,
+        }))}
+      />
 
-      {/* Toolbar: filtros + exportar/importar */}
-      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border bg-background">
-        <FiltersDrawer
-          basePath="/transactions"
-          monthBaseParam={usesCustomPeriod ? "" : mes}
-          initialFilters={filters}
-          accounts={accounts.map((a) => ({ id: a.id, name: a.name }))}
-          categories={categories.map((c) => ({
-            id: c.id,
-            code: c.code,
-            name: c.name,
-            level: c.level,
-          }))}
-          activeCount={activeFilters.length}
-        />
-        <div className="flex items-center gap-4">
-          <a
-            href={`/api/transactions/export?mes=${mes}`}
-            download
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Download className="size-3.5" />
-            Exportar
-          </a>
-          <Link
-            href="/transactions/import"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Upload className="size-3.5" />
-            Importar
-          </Link>
-        </div>
+      {/* Exportar / importar */}
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-b border-border bg-background">
+        <a
+          href={`/api/transactions/export?mes=${from.slice(0, 7)}`}
+          download
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Download className="size-3.5" />
+          Exportar
+        </a>
+        <Link
+          href="/transactions/import"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Upload className="size-3.5" />
+          Importar
+        </Link>
       </div>
 
-      {/* Chips ativos */}
-      {activeFilters.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-border bg-background">
-          {activeFilters.map((f) => (
-            <FilterChip key={f.key} label={f.label} removeHref={f.removeHref} />
-          ))}
-        </div>
-      ) : null}
-
-      {/* Sumário */}
+      {/* Sumário (sempre derivado dos filtros ativos) */}
       <div className="grid grid-cols-3 border-b border-border">
         <div className="flex flex-col items-center py-3 gap-0.5 border-r border-border">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
@@ -280,15 +155,20 @@ export default async function TransactionsPage({
         {firstPage.rows.length === 0 ? (
           <EmptyState
             icon={Receipt}
-            title="Nenhuma movimentação"
+            title={
+              hasActiveFilters
+                ? "Nenhuma transação encontrada"
+                : "Nenhuma movimentação"
+            }
             description={
-              activeFilters.length > 0
-                ? "Nenhum resultado para os filtros aplicados."
+              hasActiveFilters
+                ? "Nenhuma transação encontrada para os filtros selecionados."
                 : "Toque no + para lançar a primeira movimentação do período."
             }
           />
         ) : (
           <TransactionsList
+            key={`${from}|${to}|${regime}|${dbFilters.accountId ?? ""}|${dbFilters.categoryId ?? ""}|${dbFilters.type ?? ""}|${dbFilters.q ?? ""}`}
             initialRows={firstPage.rows}
             initialNextCursor={firstPage.nextCursor}
             regime={regime}
