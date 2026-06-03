@@ -50,6 +50,17 @@ export function formatWeekday(iso: string): string {
   return BR_WEEKDAY.format(parseISODate(iso));
 }
 
+/**
+ * Rótulo relativo para cabeçalhos de lista: "Hoje", "Ontem" ou, para datas
+ * anteriores, o dia da semana com a data ("quarta-feira, 22/05").
+ */
+export function relativeDayLabel(iso: string): string {
+  const today = todayISO();
+  if (iso === today) return "Hoje";
+  if (iso === addDaysISO(today, -1)) return "Ontem";
+  return BR_WEEKDAY.format(parseISODate(iso));
+}
+
 /** Adiciona dias a uma data ISO. */
 export function addDaysISO(iso: string, days: number): string {
   const d = parseISODate(iso);

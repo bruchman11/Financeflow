@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/current";
 import {
   getCategory,
+  getCategoryByCode,
   insertCategory,
   setCategoryArchived as setArchivedDb,
   updateCategory as updateCategoryDb,
@@ -35,14 +36,16 @@ function fieldErrorsOf(err: ZodError): Record<string, string> {
 }
 
 export async function createCategoryAction(
+  prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
   await getUserOrRedirect();
   const company = await getActiveCompanyOrRedirect();
 
   const parsed = createCategorySchema.safeParse({
+    code: formData.get("code"),
     name: formData.get("name"),
-    type: formData.get("type"),
+    dre_type: formData.get("dre_type"),
     color: formData.get("color"),
   });
   if (!parsed.success) {
@@ -53,18 +56,39 @@ export async function createCategoryAction(
     };
   }
 
+  // Verifica duplicata explícita para mensagem amigável
+  const existing = await getCategoryByCode(parsed.data.code);
+  if (existing) {
+    return {
+      ok: false,
+      error: "Já existe uma categoria com este código.",
+      fieldErrors: { code: "Código já em uso." },
+    };
+  }
+
   try {
     await insertCategory({
       company_id: company.id,
+      code: parsed.data.code,
       name: parsed.data.name,
-      type: parsed.data.type,
+      dre_type: parsed.data.dre_type,
       color: parsed.data.color,
+      // parent_id e level são resolvidos por triggers no banco
     });
-  } catch {
-    return {
-      ok: false,
-      error: "Não foi possível criar a categoria.",
-    };
+  } catch (err) {
+    // unique_violation defensivo (race condition)
+    if (
+      err instanceof Object &&
+      "code" in err &&
+      (err as { code: string }).code === "23505"
+    ) {
+      return {
+        ok: false,
+        error: "Código já em uso.",
+        fieldErrors: { code: "Código já em uso." },
+      };
+    }
+    return { ok: false, error: "Não foi possível criar a categoria." };
   }
 
   revalidatePath("/categories");
@@ -73,6 +97,7 @@ export async function createCategoryAction(
 
 export async function updateCategoryAction(
   id: string,
+  prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
   await getUserOrRedirect();
@@ -84,8 +109,9 @@ export async function updateCategoryAction(
   }
 
   const parsed = updateCategorySchema.safeParse({
+    code: formData.get("code"),
     name: formData.get("name"),
-    type: formData.get("type"),
+    dre_type: formData.get("dre_type"),
     color: formData.get("color"),
   });
   if (!parsed.success) {
@@ -96,17 +122,27 @@ export async function updateCategoryAction(
     };
   }
 
+  // Se o código mudou, verifica duplicata
+  if (parsed.data.code !== existing.code) {
+    const dupe = await getCategoryByCode(parsed.data.code);
+    if (dupe && dupe.id !== id) {
+      return {
+        ok: false,
+        error: "Já existe outra categoria com este código.",
+        fieldErrors: { code: "Código já em uso." },
+      };
+    }
+  }
+
   try {
     await updateCategoryDb(id, {
+      code: parsed.data.code,
       name: parsed.data.name,
-      type: parsed.data.type,
+      dre_type: parsed.data.dre_type,
       color: parsed.data.color,
     });
   } catch {
-    return {
-      ok: false,
-      error: "Não foi possível salvar a categoria.",
-    };
+    return { ok: false, error: "Não foi possível salvar a categoria." };
   }
 
   revalidatePath("/categories");

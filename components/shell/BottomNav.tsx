@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListOrdered, Wallet, MoreHorizontal } from "lucide-react";
+import {
+  Calendar,
+  Home,
+  ListOrdered,
+  MoreHorizontal,
+  Wallet,
+} from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +20,8 @@ type NavItem = {
 
 const items: NavItem[] = [
   { href: "/dashboard", label: "Início", icon: Home },
-  { href: "/transactions", label: "Movimentações", icon: ListOrdered },
+  { href: "/transactions", label: "Movim.", icon: ListOrdered },
+  { href: "/calendar", label: "Agenda", icon: Calendar },
   { href: "/accounts", label: "Contas", icon: Wallet },
   { href: "/more", label: "Mais", icon: MoreHorizontal },
 ];
@@ -36,7 +43,7 @@ export function BottomNav() {
       aria-label="Navegação principal"
       className="sticky bottom-0 z-30 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;

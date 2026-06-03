@@ -39,6 +39,21 @@ const amountSchema = z
     return normalized;
   });
 
+const dateSchema = z
+  .string({ error: "Informe a data." })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.");
+
+const optionalDateSchema = z
+  .string()
+  .optional()
+  .nullable()
+  .transform((v) => {
+    const s = (v ?? "").trim();
+    if (!s) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    return s;
+  });
+
 export const createTransactionSchema = z.object({
   type: z.enum(TRANSACTION_TYPES, { error: "Tipo inválido." }),
   amount: amountSchema,
@@ -48,9 +63,9 @@ export const createTransactionSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v?.trim() ? v.trim() : null)),
-  occurred_on: z
-    .string({ error: "Informe a data." })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida."),
+  occurred_on: dateSchema,
+  /** Quando ausente, o trigger no banco preenche com occurred_on. */
+  competence_date: optionalDateSchema,
   description: z
     .string()
     .max(255, "Máximo 255 caracteres.")

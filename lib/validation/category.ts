@@ -1,36 +1,38 @@
 import { z } from "zod";
-import type { TransactionType } from "@/lib/types/database";
+import type { DreType } from "@/lib/types/database";
 
-export const TRANSACTION_TYPES = [
-  "income",
+export const DRE_TYPES = [
+  "revenue",
+  "cost",
   "expense",
-] as const satisfies readonly TransactionType[];
+  "tax",
+] as const satisfies readonly DreType[];
 
-export const transactionTypeLabels: Record<TransactionType, string> = {
-  income: "Entrada",
-  expense: "Saída",
+export const dreTypeLabels: Record<DreType, string> = {
+  revenue: "Receita",
+  cost: "Custo",
+  expense: "Despesa",
+  tax: "Imposto",
+};
+
+export const dreTypeColors: Record<DreType, string> = {
+  revenue: "#22c55e",
+  cost: "#f97316",
+  expense: "#ef4444",
+  tax: "#64748b",
 };
 
 /**
- * Preset fixo de cores. Hex 6 dígitos minúsculo.
- * Escolhidas para terem bom contraste com texto branco/dark mode.
+ * Código DRE no formato "NN" ou "NN.NN" ou "NN.NN.NN" (até 3 níveis).
+ * Cada segmento tem 2 dígitos.
  */
-export const CATEGORY_COLORS = [
-  "#ef4444", // vermelho
-  "#f97316", // laranja
-  "#eab308", // amarelo
-  "#22c55e", // verde
-  "#10b981", // esmeralda
-  "#06b6d4", // ciano
-  "#3b82f6", // azul
-  "#8b5cf6", // violeta
-  "#ec4899", // rosa
-  "#64748b", // cinza
-] as const;
-
-export type CategoryColor = (typeof CATEGORY_COLORS)[number];
-
-export const DEFAULT_CATEGORY_COLOR: CategoryColor = "#64748b";
+const codeSchema = z
+  .string({ error: "Informe o código." })
+  .trim()
+  .regex(
+    /^\d{2}(\.\d{2}){0,2}$/,
+    "Formato inválido. Use 01, 01.02 ou 01.02.03.",
+  );
 
 const nameSchema = z
   .string({ error: "Informe o nome." })
@@ -38,25 +40,23 @@ const nameSchema = z
   .min(1, "Informe o nome.")
   .max(60, "Máximo 60 caracteres.");
 
-const typeSchema = z.enum(TRANSACTION_TYPES, { error: "Tipo inválido." });
+const dreTypeSchema = z.enum(DRE_TYPES, { error: "Tipo DRE inválido." });
 
 const colorSchema = z
   .string()
   .optional()
-  .transform((value, ctx) => {
-    const raw = (value ?? "").trim().toLowerCase();
-    if (!raw) return DEFAULT_CATEGORY_COLOR;
-    const valid = (CATEGORY_COLORS as readonly string[]).includes(raw);
-    if (!valid) {
-      ctx.addIssue({ code: "custom", message: "Cor inválida." });
-      return z.NEVER;
-    }
-    return raw as CategoryColor;
+  .nullable()
+  .transform((v) => {
+    const s = (v ?? "").trim().toLowerCase();
+    if (!s) return null;
+    if (!/^#[0-9a-f]{6}$/.test(s)) return null;
+    return s;
   });
 
 export const createCategorySchema = z.object({
+  code: codeSchema,
   name: nameSchema,
-  type: typeSchema,
+  dre_type: dreTypeSchema,
   color: colorSchema,
 });
 
@@ -69,3 +69,10 @@ export const archiveCategorySchema = z.object({
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+
+/** Retorna o code do pai a partir de um code filho, ou null se for raiz. */
+export function parentCodeOf(code: string): string | null {
+  const segments = code.split(".");
+  if (segments.length <= 1) return null;
+  return segments.slice(0, -1).join(".");
+}

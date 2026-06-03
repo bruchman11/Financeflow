@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArchiveRestore, Pencil, Plus, Wallet } from "lucide-react";
+import { ArchiveRestore, ArrowLeftRight, Pencil, Plus, Wallet } from "lucide-react";
 
 export const metadata: Metadata = { title: "Contas — FinanceFlow" };
 import { listAccounts } from "@/lib/db/accounts";
 import { accountKindLabels } from "@/lib/validation/account";
 import { formatBRL } from "@/lib/format/currency";
 import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { toggleAccountArchivedAction } from "./actions";
 
 export default async function AccountsPage({
@@ -31,12 +32,13 @@ export default async function AccountsPage({
       </header>
 
       {active.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border px-4 py-8 text-center space-y-1">
-          <p className="text-sm font-medium">Nenhuma conta ativa</p>
-          <p className="text-xs text-muted-foreground">
-            Crie uma conta para começar a lançar movimentações.
-          </p>
-        </div>
+        <EmptyState
+          compact
+          className="rounded-lg border border-dashed border-border"
+          icon={Wallet}
+          title="Nenhuma conta ativa"
+          description="Crie uma conta para começar a lançar movimentações."
+        />
       ) : (
         <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
           {active.map((a) => (
@@ -67,16 +69,28 @@ export default async function AccountsPage({
         </ul>
       )}
 
-      <Link
-        href="/accounts/new"
-        className={buttonVariants({
-          variant: "outline",
-          className: "h-12 text-base w-full",
-        })}
-      >
-        <Plus className="size-4" />
-        Nova conta
-      </Link>
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          href="/accounts/new"
+          className={buttonVariants({
+            variant: "outline",
+            className: "h-12 text-base",
+          })}
+        >
+          <Plus className="size-4" />
+          Nova conta
+        </Link>
+        <Link
+          href="/accounts/transfer"
+          className={buttonVariants({
+            variant: "outline",
+            className: "h-12 text-base",
+          })}
+        >
+          <ArrowLeftRight className="size-4" />
+          Transferir
+        </Link>
+      </div>
 
       {archived.length > 0 ? (
         <section className="space-y-3 pt-2">

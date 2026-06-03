@@ -41,6 +41,12 @@ yarn-error.log*
 .supabase/
 supabase/.temp/
 
+# one-off setup/seed scripts — podem conter dados reais (PII/valores). Não versionar.
+/supabase/scripts/
+
+# local tooling
+/.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

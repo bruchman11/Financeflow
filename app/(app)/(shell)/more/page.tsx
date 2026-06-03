@@ -1,31 +1,17 @@
-import Link from "next/link";
-import { ChevronRight, LogOut, Repeat2, Tags } from "lucide-react";
+import {
+  BarChart3,
+  CreditCard,
+  FileText,
+  LogOut,
+  Receipt,
+  Repeat2,
+  Tags,
+} from "lucide-react";
 import { getUserOrRedirect } from "@/lib/auth/current";
 import { clearActiveCompanyAction } from "@/app/(app)/companies/actions";
 import { signOutAction } from "@/app/(auth)/actions";
-
-type RowProps = {
-  icon: React.ReactNode;
-  label: string;
-  hint?: string;
-};
-
-function Row({ icon, label, hint }: RowProps) {
-  return (
-    <div className="w-full flex items-center gap-3 px-4 py-3 min-h-[56px]">
-      <div className="size-9 rounded-md bg-muted flex items-center justify-center shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-medium leading-tight">{label}</p>
-        {hint ? (
-          <p className="text-xs text-muted-foreground truncate">{hint}</p>
-        ) : null}
-      </div>
-      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-    </div>
-  );
-}
+import { PageHeader } from "@/components/shell/PageHeader";
+import { LinkRow, ListRow } from "@/components/shell/ListRow";
 
 /**
  * Página "Mais": agrupa ações secundárias que não cabem na bottom nav.
@@ -36,29 +22,24 @@ export default async function MorePage() {
 
   return (
     <main className="flex-1 flex flex-col px-4 py-6 gap-6">
-      <header className="space-y-1 px-2">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">
-          Configurações
-        </p>
-        <h1 className="text-2xl font-semibold">Mais</h1>
-      </header>
+      <PageHeader eyebrow="Configurações" title="Mais" className="px-2" />
 
       <section className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
-        <Link href="/categories" className="block hover:bg-muted transition-colors">
-          <Row
-            icon={<Tags className="size-4 text-muted-foreground" />}
-            label="Categorias"
-          />
-        </Link>
+        <LinkRow href="/fixed-expenses" icon={Receipt} label="Despesas fixas" />
+        <LinkRow
+          href="/credit-cards"
+          icon={CreditCard}
+          label="Cartões de crédito"
+        />
+        <LinkRow href="/bills" icon={FileText} label="Boletos" />
+        <LinkRow href="/reports" icon={BarChart3} label="Relatórios" />
+        <LinkRow href="/categories" icon={Tags} label="Categorias" />
         <form action={clearActiveCompanyAction}>
           <button
             type="submit"
-            className="w-full text-left hover:bg-muted active:bg-muted transition-colors"
+            className="w-full hover:bg-muted active:bg-muted transition-colors"
           >
-            <Row
-              icon={<Repeat2 className="size-4 text-muted-foreground" />}
-              label="Trocar empresa"
-            />
+            <ListRow icon={Repeat2} label="Trocar empresa" />
           </button>
         </form>
       </section>
@@ -67,13 +48,9 @@ export default async function MorePage() {
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full text-left hover:bg-muted active:bg-muted transition-colors"
+            className="w-full hover:bg-muted active:bg-muted transition-colors"
           >
-            <Row
-              icon={<LogOut className="size-4 text-muted-foreground" />}
-              label="Sair"
-              hint={user.email ?? undefined}
-            />
+            <ListRow icon={LogOut} label="Sair" hint={user.email ?? undefined} />
           </button>
         </form>
       </section>

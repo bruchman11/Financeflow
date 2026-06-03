@@ -3,14 +3,16 @@ import { ArrowLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { listAccounts } from "@/lib/db/accounts";
 import { listCategories } from "@/lib/db/categories";
+import { getLastRegularTransaction } from "@/lib/db/transactions";
 import { todayISO } from "@/lib/format/date";
 import { TransactionForm } from "../TransactionForm";
 import { createTransactionAction } from "../actions";
 
 export default async function NewTransactionPage() {
-  const [accounts, categories] = await Promise.all([
+  const [accounts, categories, last] = await Promise.all([
     listAccounts(),
     listCategories(),
+    getLastRegularTransaction(),
   ]);
 
   if (accounts.length === 0) {
@@ -30,6 +32,23 @@ export default async function NewTransactionPage() {
     );
   }
 
+  const repeat =
+    last && accounts.some((a) => a.id === last.account_id)
+      ? {
+          type: last.type,
+          accountId: last.account_id,
+          categoryId:
+            last.category_id &&
+            categories.some((c) => c.id === last.category_id)
+              ? last.category_id
+              : "",
+          label:
+            last.description ||
+            last.categories?.name ||
+            (last.type === "income" ? "Entrada" : "Saída"),
+        }
+      : null;
+
   return (
     <main className="flex-1 flex flex-col px-4 py-4 gap-6">
       <header className="flex items-center gap-2">
@@ -48,6 +67,7 @@ export default async function NewTransactionPage() {
         accounts={accounts}
         categories={categories}
         defaultValues={{ occurred_on: todayISO() }}
+        repeat={repeat}
         submitLabel="Lançar"
       />
     </main>

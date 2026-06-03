@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,16 @@ type Props = {
     account_id?: string;
     category_id?: string | null;
     occurred_on?: string;
+    competence_date?: string | null;
     description?: string | null;
   };
+  /** Semente do atalho "repetir último" (tipo/conta/categoria do lançamento anterior). */
+  repeat?: {
+    type: TransactionType;
+    accountId: string;
+    categoryId: string;
+    label: string;
+  } | null;
   submitLabel?: string;
 };
 
@@ -48,6 +57,7 @@ export function TransactionForm({
   accounts,
   categories,
   defaultValues,
+  repeat,
   submitLabel = "Salvar",
 }: Props) {
   const [state, formAction] = useActionState(action, { ok: true } as ActionResult);
@@ -56,6 +66,9 @@ export function TransactionForm({
 
   const [type, setType] = useState<TransactionType>(
     defaultValues?.type ?? "expense",
+  );
+  const [account, setAccount] = useState(
+    defaultValues?.account_id ?? accounts[0]?.id ?? "",
   );
   const [selectedCategory, setSelectedCategory] = useState(
     defaultValues?.category_id ?? "",
@@ -66,14 +79,29 @@ export function TransactionForm({
     typeof crypto !== "undefined" ? crypto.randomUUID() : "",
   );
 
-  const filteredCategories = categories.filter((c) => c.type === type);
+  // Income → categorias revenue. Expense → cost / expense / tax.
+  const matchesType = (dreType: string, txType: TransactionType) =>
+    txType === "income"
+      ? dreType === "revenue"
+      : dreType === "cost" || dreType === "expense" || dreType === "tax";
+
+  const filteredCategories = categories.filter((c) =>
+    matchesType(c.dre_type, type),
+  );
 
   function handleTypeChange(newType: TransactionType) {
     setType(newType);
     const stillValid = categories
-      .filter((c) => c.type === newType)
+      .filter((c) => matchesType(c.dre_type, newType))
       .some((c) => c.id === selectedCategory);
     if (!stillValid) setSelectedCategory("");
+  }
+
+  function applyRepeat() {
+    if (!repeat) return;
+    setType(repeat.type);
+    setAccount(repeat.accountId);
+    setSelectedCategory(repeat.categoryId);
   }
 
   return (
@@ -83,6 +111,21 @@ export function TransactionForm({
         name="client_request_id"
         value={clientRequestId.current}
       />
+
+      {/* Atalho: repetir último lançamento (tipo/conta/categoria) */}
+      {repeat ? (
+        <button
+          type="button"
+          onClick={applyRepeat}
+          className="flex items-center gap-2 w-full min-h-11 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+        >
+          <RotateCcw className="size-4 shrink-0" />
+          <span className="truncate">
+            Repetir último:{" "}
+            <span className="text-foreground font-medium">{repeat.label}</span>
+          </span>
+        </button>
+      ) : null}
 
       {/* Tipo (Entrada / Saída) */}
       <div
@@ -103,10 +146,10 @@ export function TransactionForm({
                 "h-12 rounded-md border text-sm font-semibold transition-colors",
                 t === "expense"
                   ? active
-                    ? "bg-destructive text-destructive-foreground border-destructive"
+                    ? "bg-expense text-white border-expense"
                     : "bg-background text-foreground border-input hover:bg-muted"
                   : active
-                    ? "bg-emerald-600 text-white border-emerald-600"
+                    ? "bg-income text-white border-income"
                     : "bg-background text-foreground border-input hover:bg-muted",
               )}
             >
@@ -154,7 +197,8 @@ export function TransactionForm({
           id="account_id"
           name="account_id"
           required
-          defaultValue={defaultValues?.account_id ?? accounts[0]?.id ?? ""}
+          value={account}
+          onChange={(e) => setAccount(e.target.value)}
           className={cn(
             "w-full h-12 px-3 rounded-md border border-input bg-background text-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring",
@@ -188,31 +232,20 @@ export function TransactionForm({
           <option value="">Sem categoria</option>
           {filteredCategories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {" ".repeat((c.level - 1) * 2)}
+              {c.code} {c.name}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Data */}
-      <div className="space-y-1.5">
-        <Label htmlFor="occurred_on">Data</Label>
-        <Input
-          id="occurred_on"
-          name="occurred_on"
-          type="date"
-          required
-          defaultValue={defaultValues?.occurred_on ?? ""}
-          className={cn(
-            "h-12",
-            fieldErrors.occurred_on ? "border-destructive" : "",
-          )}
-          aria-invalid={Boolean(fieldErrors.occurred_on) || undefined}
-        />
-        {fieldErrors.occurred_on ? (
-          <p className="text-sm text-destructive">{fieldErrors.occurred_on}</p>
-        ) : null}
-      </div>
+      {/* Data de caixa + competência (colapsável) */}
+      <DateFields
+        occurredOn={defaultValues?.occurred_on ?? ""}
+        competenceDate={defaultValues?.competence_date ?? null}
+        errors={fieldErrors}
+      />
+
 
       {/* Descrição */}
       <div className="space-y-1.5">
@@ -239,5 +272,99 @@ export function TransactionForm({
 
       <SubmitButton label={submitLabel} />
     </form>
+  );
+}
+
+/**
+ * Dois campos de data: caixa (occurred_on) sempre visível, competência colapsada
+ * por padrão. Quando a competência é igual ao caixa (default), o input fica
+ * oculto; se o usuário expandir, fica controlado independentemente.
+ */
+function DateFields({
+  occurredOn,
+  competenceDate,
+  errors,
+}: {
+  occurredOn: string;
+  competenceDate: string | null;
+  errors: Record<string, string>;
+}) {
+  const competenceDiffersFromDefault =
+    competenceDate !== null && competenceDate !== occurredOn;
+
+  const [occurred, setOccurred] = useState(occurredOn);
+  const [showCompetence, setShowCompetence] = useState(
+    competenceDiffersFromDefault,
+  );
+  const [competence, setCompetence] = useState(
+    competenceDate ?? occurredOn,
+  );
+
+  // Quando a competência está colapsada, espelha occurred — assim o input
+  // hidden enviado ao servidor sempre tem o valor correto.
+  const effectiveCompetence = showCompetence ? competence : occurred;
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="occurred_on">Data</Label>
+      <Input
+        id="occurred_on"
+        name="occurred_on"
+        type="date"
+        required
+        value={occurred}
+        onChange={(e) => setOccurred(e.target.value)}
+        className={cn(
+          "h-12",
+          errors.occurred_on ? "border-destructive" : "",
+        )}
+        aria-invalid={Boolean(errors.occurred_on) || undefined}
+      />
+      {errors.occurred_on ? (
+        <p className="text-sm text-destructive">{errors.occurred_on}</p>
+      ) : null}
+
+      {showCompetence ? (
+        <div className="pt-2 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="competence_date">Data de competência</Label>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCompetence(false);
+                setCompetence(occurred);
+              }}
+              className="text-xs text-muted-foreground underline"
+            >
+              usar data de caixa
+            </button>
+          </div>
+          <Input
+            id="competence_date"
+            type="date"
+            value={competence}
+            onChange={(e) => setCompetence(e.target.value)}
+            className="h-12"
+          />
+          <p className="text-xs text-muted-foreground">
+            Use uma data diferente quando o regime de competência for distinto
+            do regime de caixa.
+          </p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowCompetence(true)}
+          className="text-xs text-muted-foreground underline self-start"
+        >
+          Alterar data de competência
+        </button>
+      )}
+      <input
+        type="hidden"
+        name="competence_date"
+        value={effectiveCompetence}
+      />
+    </div>
   );
 }

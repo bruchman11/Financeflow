@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { listCategories } from "@/lib/db/categories";
 import { CategoryForm } from "../CategoryForm";
-import { createCategoryAction, type ActionResult } from "../actions";
+import { createCategoryAction } from "../actions";
 
-async function action(_prev: ActionResult, formData: FormData) {
-  "use server";
-  return createCategoryAction(formData);
-}
+export default async function NewCategoryPage() {
+  // Mapa de codes para preview do parent no form
+  const rows = await listCategories({ includeArchived: false });
+  const existingCodes = Object.fromEntries(
+    rows.map((r) => [r.code, { name: r.name, dre_type: r.dre_type }]),
+  );
 
-export default function NewCategoryPage() {
   return (
     <main className="flex-1 flex flex-col px-6 py-6 gap-6">
       <Link
@@ -26,7 +28,11 @@ export default function NewCategoryPage() {
         <h1 className="text-2xl font-semibold">Nova categoria</h1>
       </header>
 
-      <CategoryForm action={action} submitLabel="Criar categoria" />
+      <CategoryForm
+        action={createCategoryAction}
+        submitLabel="Criar categoria"
+        existingCodes={existingCodes}
+      />
     </main>
   );
 }

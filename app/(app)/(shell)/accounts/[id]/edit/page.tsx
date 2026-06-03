@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { getAccount } from "@/lib/db/accounts";
 import { formatNumber } from "@/lib/format/currency";
+import { buttonVariants } from "@/components/ui/button";
 import { AccountForm } from "../../AccountForm";
 import {
   toggleAccountArchivedAction,
@@ -50,6 +51,17 @@ export default async function EditAccountPage({
         }}
         submitLabel="Salvar alterações"
       />
+
+      <Link
+        href={`/accounts/${account.id}/adjust`}
+        className={buttonVariants({
+          variant: "outline",
+          className: "h-12 w-full",
+        })}
+      >
+        <SlidersHorizontal className="size-4" />
+        Ajustar saldo
+      </Link>
 
       <div className="pt-2 border-t border-border">
         <form action={toggleAccountArchivedAction}>

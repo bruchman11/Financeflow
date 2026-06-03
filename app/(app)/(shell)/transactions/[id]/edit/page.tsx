@@ -54,6 +54,7 @@ export default async function EditTransactionPage({
           account_id: transaction.account_id,
           category_id: transaction.category_id,
           occurred_on: transaction.occurred_on,
+          competence_date: transaction.competence_date,
           description: transaction.description,
         }}
         submitLabel="Salvar alterações"

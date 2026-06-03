@@ -1,25 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import { getCategory } from "@/lib/db/categories";
-import {
-  CATEGORY_COLORS,
-  DEFAULT_CATEGORY_COLOR,
-  type CategoryColor,
-} from "@/lib/validation/category";
+import { getCategory, listCategories } from "@/lib/db/categories";
 import { CategoryForm } from "../../CategoryForm";
 import {
   toggleCategoryArchivedAction,
   updateCategoryAction,
-  type ActionResult,
 } from "../../actions";
-
-function normalizeColor(value: string | null): CategoryColor {
-  const lower = (value ?? "").toLowerCase();
-  return (CATEGORY_COLORS as readonly string[]).includes(lower)
-    ? (lower as CategoryColor)
-    : DEFAULT_CATEGORY_COLOR;
-}
 
 export default async function EditCategoryPage({
   params,
@@ -27,13 +14,19 @@ export default async function EditCategoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const category = await getCategory(id);
+  const [category, rows] = await Promise.all([
+    getCategory(id),
+    listCategories({ includeArchived: false }),
+  ]);
   if (!category) notFound();
 
-  async function action(_prev: ActionResult, formData: FormData) {
-    "use server";
-    return updateCategoryAction(id, formData);
-  }
+  const existingCodes = Object.fromEntries(
+    rows
+      .filter((r) => r.id !== id)
+      .map((r) => [r.code, { name: r.name, dre_type: r.dre_type }]),
+  );
+
+  const boundUpdate = updateCategoryAction.bind(null, id);
 
   return (
     <main className="flex-1 flex flex-col px-6 py-6 gap-6">
@@ -49,17 +42,21 @@ export default async function EditCategoryPage({
         <p className="text-xs text-muted-foreground uppercase tracking-wider">
           Editar categoria
         </p>
-        <h1 className="text-2xl font-semibold truncate">{category.name}</h1>
+        <h1 className="text-2xl font-semibold truncate">
+          {category.code} {category.name}
+        </h1>
       </header>
 
       <CategoryForm
-        action={action}
+        action={boundUpdate}
         defaultValues={{
+          code: category.code,
           name: category.name,
-          type: category.type,
-          color: normalizeColor(category.color),
+          dre_type: category.dre_type,
+          color: category.color,
         }}
         submitLabel="Salvar alterações"
+        existingCodes={existingCodes}
       />
 
       <div className="pt-2 border-t border-border">

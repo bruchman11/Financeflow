@@ -4,14 +4,19 @@ import { Wallet, Plus, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = { title: "Início — FinanceFlow" };
 import { getActiveCompanyOrRedirect } from "@/lib/auth/current";
-import { listTransactions } from "@/lib/db/transactions";
+import {
+  getTransactionsSummary,
+  listTransactionsPage,
+} from "@/lib/db/transactions";
 import { getAccountBalances } from "@/lib/db/dashboard";
 import { currentMonthRange } from "@/lib/format/date";
 import { formatBRL } from "@/lib/format/currency";
 import { formatBRShort } from "@/lib/format/date";
 import { accountKindLabels } from "@/lib/validation/account";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Amount } from "@/components/ui/amount";
+import { PageHeader } from "@/components/shell/PageHeader";
 
 function currentMonthLabel(): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -25,36 +30,24 @@ export default async function DashboardPage() {
 
   const { from, to } = currentMonthRange();
 
-  const [monthTxs, accountBalances] = await Promise.all([
-    listTransactions({ from, to }),
-    getAccountBalances(),
-  ]);
+  // Resumo agregado + 5 últimas (sem carregar o mês inteiro)
+  const [{ totalIncome, totalExpense, balance }, recent, accountBalances] =
+    await Promise.all([
+      getTransactionsSummary({ from, to }),
+      listTransactionsPage({ from, to, pageSize: 5 }),
+      getAccountBalances(),
+    ]);
 
-  // Sumário do mês
-  let totalIncome = 0;
-  let totalExpense = 0;
-  for (const tx of monthTxs) {
-    const v = Number(tx.amount);
-    if (tx.type === "income") totalIncome += v;
-    else totalExpense += v;
-  }
-  const balance = totalIncome - totalExpense;
-
-  // Últimas 5 movimentações
-  const recentTxs = monthTxs.slice(0, 5);
+  const recentTxs = recent.rows;
 
   return (
     <main className="flex-1 flex flex-col px-4 py-5 gap-6 pb-6">
       {/* Cabeçalho */}
-      <header className="space-y-0.5">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">
-          Início
-        </p>
-        <h1 className="text-2xl font-bold leading-tight">{company.name}</h1>
-        <p className="text-sm text-muted-foreground capitalize">
-          {currentMonthLabel()}
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Início"
+        title={company.name}
+        subtitle={currentMonthLabel()}
+      />
 
       {/* Resumo do mês */}
       <section aria-labelledby="summary-heading">
@@ -69,7 +62,7 @@ export default async function DashboardPage() {
             <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Entradas
             </span>
-            <span className="text-sm font-semibold text-emerald-600 tabular-nums">
+            <span className="text-sm font-semibold text-income tabular-nums">
               {formatBRL(totalIncome)}
             </span>
           </div>
@@ -77,7 +70,7 @@ export default async function DashboardPage() {
             <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Saídas
             </span>
-            <span className="text-sm font-semibold text-destructive tabular-nums">
+            <span className="text-sm font-semibold text-expense tabular-nums">
               {formatBRL(totalExpense)}
             </span>
           </div>
@@ -85,15 +78,7 @@ export default async function DashboardPage() {
             <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Saldo
             </span>
-            <span
-              className={cn(
-                "text-sm font-semibold tabular-nums",
-                balance >= 0 ? "text-emerald-600" : "text-destructive",
-              )}
-            >
-              {balance < 0 ? "−" : ""}
-              {formatBRL(Math.abs(balance))}
-            </span>
+            <Amount value={balance} tone="result" className="text-base font-bold" />
           </div>
         </div>
       </section>
@@ -136,17 +121,11 @@ export default async function DashboardPage() {
                       {accountKindLabels[a.kind]}
                     </p>
                   </div>
-                  <span
-                    className={cn(
-                      "text-sm font-semibold tabular-nums shrink-0",
-                      a.currentBalance < 0
-                        ? "text-destructive"
-                        : "text-foreground",
-                    )}
-                  >
-                    {a.currentBalance < 0 ? "−" : ""}
-                    {formatBRL(Math.abs(a.currentBalance))}
-                  </span>
+                  <Amount
+                    value={a.currentBalance}
+                    tone="account"
+                    className="text-sm font-semibold shrink-0"
+                  />
                 </Link>
               </li>
             ))}
@@ -173,12 +152,12 @@ export default async function DashboardPage() {
         </div>
 
         {recentTxs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center space-y-1">
-            <p className="text-sm font-medium">Nenhuma movimentação no mês</p>
-            <p className="text-xs text-muted-foreground">
-              Toque em "Lançar movimentação" para registrar a primeira.
-            </p>
-          </div>
+          <EmptyState
+            compact
+            className="rounded-xl border border-dashed border-border"
+            title="Nenhuma movimentação no mês"
+            description='Toque em "Lançar movimentação" para registrar a primeira.'
+          />
         ) : (
           <ul className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
             {recentTxs.map((tx) => (
@@ -192,7 +171,7 @@ export default async function DashboardPage() {
                     style={{
                       backgroundColor:
                         tx.categories?.color ??
-                        (tx.type === "income" ? "#22c55e" : "#ef4444"),
+                        `var(--${tx.type === "income" ? "income" : "expense"})`,
                     }}
                   />
                   <div className="flex-1 min-w-0">
@@ -206,17 +185,11 @@ export default async function DashboardPage() {
                       {tx.accounts?.name ? ` · ${tx.accounts.name}` : ""}
                     </p>
                   </div>
-                  <span
-                    className={cn(
-                      "text-sm font-semibold shrink-0 tabular-nums",
-                      tx.type === "income"
-                        ? "text-emerald-600"
-                        : "text-foreground",
-                    )}
-                  >
-                    {tx.type === "expense" ? "−" : "+"}
-                    {formatBRL(tx.amount)}
-                  </span>
+                  <Amount
+                    value={tx.amount}
+                    tone={tx.type === "income" ? "income" : "expense"}
+                    className="text-sm font-semibold shrink-0"
+                  />
                 </Link>
               </li>
             ))}

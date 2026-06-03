@@ -11,7 +11,10 @@ import {
   deleteTransaction,
   getTransaction,
   insertTransaction,
+  listTransactionsPage,
   updateTransaction,
+  type TransactionRegime,
+  type TransactionsPage,
 } from "@/lib/db/transactions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listAccounts } from "@/lib/db/accounts";
@@ -26,6 +29,39 @@ import {
 export type ActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+export type LoadMorePayload = {
+  from: string;
+  to: string;
+  regime: TransactionRegime;
+  accountId: string | null;
+  categoryId: string | null;
+  type: "income" | "expense" | null;
+  q: string | null;
+  cursor: string;
+};
+
+/**
+ * Carrega a próxima página de movimentações a partir de um cursor, preservando
+ * os filtros aplicados. Leitura isolada por empresa via RLS.
+ */
+export async function loadMoreTransactionsAction(
+  payload: LoadMorePayload,
+): Promise<TransactionsPage> {
+  await getUserOrRedirect();
+  await getActiveCompanyOrRedirect();
+
+  return listTransactionsPage({
+    from: payload.from,
+    to: payload.to,
+    regime: payload.regime,
+    accountId: payload.accountId,
+    categoryId: payload.categoryId,
+    type: payload.type,
+    q: payload.q,
+    cursor: payload.cursor,
+  });
+}
 
 export type ImportResult =
   | { ok: "idle" }
@@ -56,6 +92,7 @@ export async function createTransactionAction(
     account_id: formData.get("account_id"),
     category_id: formData.get("category_id"),
     occurred_on: formData.get("occurred_on"),
+    competence_date: formData.get("competence_date"),
     description: formData.get("description"),
     client_request_id: formData.get("client_request_id"),
   });
@@ -77,6 +114,9 @@ export async function createTransactionAction(
       amount: parsed.data.amount,
       description: parsed.data.description ?? null,
       occurred_on: parsed.data.occurred_on,
+      ...(parsed.data.competence_date
+        ? { competence_date: parsed.data.competence_date }
+        : {}),
       client_request_id: parsed.data.client_request_id ?? null,
       created_by: user.id,
     });
@@ -119,6 +159,7 @@ export async function updateTransactionAction(
     account_id: formData.get("account_id"),
     category_id: formData.get("category_id"),
     occurred_on: formData.get("occurred_on"),
+    competence_date: formData.get("competence_date"),
     description: formData.get("description"),
   });
 
@@ -138,6 +179,9 @@ export async function updateTransactionAction(
       amount: parsed.data.amount,
       description: parsed.data.description ?? null,
       occurred_on: parsed.data.occurred_on,
+      ...(parsed.data.competence_date
+        ? { competence_date: parsed.data.competence_date }
+        : {}),
     });
   } catch {
     return { ok: false, error: "Não foi possível salvar a movimentação." };

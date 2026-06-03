@@ -19,31 +19,36 @@ export type AccountBalance = {
 export async function getAccountBalances(): Promise<AccountBalance[]> {
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: accounts, error: accErr }, { data: txs, error: txErr }] =
-    await Promise.all([
-      supabase
-        .from("accounts")
-        .select("id, name, kind, opening_balance")
-        .eq("is_archived", false)
-        .order("name", { ascending: true }),
-      supabase
-        .from("transactions")
-        .select("account_id, type, amount"),
-    ]);
-
+  const { data: accounts, error: accErr } = await supabase
+    .from("accounts")
+    .select("id, name, kind, opening_balance")
+    .eq("is_archived", false)
+    .order("name", { ascending: true });
   if (accErr) throw accErr;
-  if (txErr) throw txErr;
 
-  // Agrega o total de transações por conta
+  // Soma sinalizada de TODAS as transações por conta. Paginamos em blocos
+  // porque uma consulta sem range é truncada pelo limite de linhas do PostgREST
+  // (~1000) — o que distorcia o saldo assim que a empresa passava de 1000
+  // lançamentos. O somatório precisa bater com a RPC create_balance_adjustment.
   const sums = new Map<string, number>();
-  for (const tx of txs ?? []) {
-    const curr = sums.get(tx.account_id) ?? 0;
-    sums.set(
-      tx.account_id,
-      tx.type === "income"
-        ? curr + Number(tx.amount)
-        : curr - Number(tx.amount),
-    );
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data: txs, error: txErr } = await supabase
+      .from("transactions")
+      .select("account_id, type, amount")
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (txErr) throw txErr;
+    for (const tx of txs ?? []) {
+      const curr = sums.get(tx.account_id) ?? 0;
+      sums.set(
+        tx.account_id,
+        tx.type === "income"
+          ? curr + Number(tx.amount)
+          : curr - Number(tx.amount),
+      );
+    }
+    if (!txs || txs.length < PAGE) break;
   }
 
   return (accounts ?? []).map((a) => ({
