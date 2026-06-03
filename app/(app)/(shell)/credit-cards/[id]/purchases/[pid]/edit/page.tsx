@@ -48,7 +48,7 @@ export default async function EditPurchasePage({
       </header>
 
       {/* Resumo read-only */}
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
+      <div className="surface divide-y divide-border">
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">
             Valor da parcela
@@ -74,7 +74,7 @@ export default async function EditPurchasePage({
           <span
             className={
               purchase.payment_transaction_id
-                ? "text-sm font-medium text-emerald-600"
+                ? "text-sm font-medium text-income"
                 : "text-sm font-medium text-muted-foreground"
             }
           >

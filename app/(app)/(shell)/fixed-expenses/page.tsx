@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, Receipt, Pencil, PowerOff, Power } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   classifyDue,
@@ -22,11 +23,14 @@ export const metadata: Metadata = {
 
 const BUCKET_ORDER: DueBucket[] = ["overdue", "today", "upcoming", "future"];
 
-const bucketBadgeStyle: Record<DueBucket, string> = {
-  overdue: "bg-destructive/10 text-destructive border-destructive/30",
-  today: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
-  upcoming: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
-  future: "bg-muted text-muted-foreground border-border",
+const bucketBadgeVariant: Record<
+  DueBucket,
+  "danger" | "warning" | "info" | "default"
+> = {
+  overdue: "danger",
+  today: "warning",
+  upcoming: "info",
+  future: "default",
 };
 
 export default async function FixedExpensesPage({
@@ -79,7 +83,7 @@ export default async function FixedExpensesPage({
                     {dueBucketLabels[bucket]}{" "}
                     <span className="text-foreground/70">({items.length})</span>
                   </h2>
-                  <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+                  <ul className="surface divide-y divide-border overflow-hidden">
                     {items.map((fx) => (
                       <FixedExpenseRow key={fx.id} fx={fx} bucket={bucket} />
                     ))}
@@ -97,7 +101,7 @@ export default async function FixedExpensesPage({
           {inactive.length === 0 ? (
             <EmptyState compact title="Nenhuma despesa fixa inativa" />
           ) : (
-            <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <ul className="surface divide-y divide-border overflow-hidden">
               {inactive.map((fx) => (
                 <FixedExpenseRow key={fx.id} fx={fx} bucket="future" inactive />
               ))}
@@ -172,18 +176,13 @@ function FixedExpenseRow({
 
         <div className="flex items-center gap-2 pl-11">
           {!inactive ? (
-            <span
-              className={cn(
-                "inline-flex items-center h-6 px-2 rounded-full text-[10px] font-semibold border tabular-nums",
-                bucketBadgeStyle[bucket],
-              )}
-            >
+            <Badge variant={bucketBadgeVariant[bucket]} className="tabular-nums">
               {bucket === "overdue"
                 ? `Venceu ${formatBR(fx.next_due_date)}`
                 : bucket === "today"
                   ? "Vence hoje"
                   : `Vence ${formatBR(fx.next_due_date)}`}
-            </span>
+            </Badge>
           ) : (
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
               Inativa

@@ -112,7 +112,7 @@ export function CategoryForm({
           </p>
         )}
         {parentPreview ? (
-          <p className="text-xs text-emerald-600">
+          <p className="text-xs text-income">
             ↳ subcategoria de{" "}
             <strong>
               {parentCode} {parentPreview.name}

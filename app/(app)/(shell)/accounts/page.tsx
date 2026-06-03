@@ -45,7 +45,7 @@ export default async function AccountsPage({
           description="Crie uma conta para começar a lançar movimentações."
         />
       ) : (
-        <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        <ul className="surface divide-y divide-border overflow-hidden">
           {active.map((a) => (
             <li key={a.id}>
               <Link
@@ -112,7 +112,7 @@ export default async function AccountsPage({
           </div>
 
           {showArchived ? (
-            <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <ul className="surface divide-y divide-border overflow-hidden">
               {archived.map((a) => (
                 <li key={a.id}>
                   <div className="flex items-center gap-3 px-4 py-3 min-h-[64px] opacity-70">

@@ -72,19 +72,18 @@ export default async function DashboardPage() {
       {accountBalances.length > 0 ? (
         <section
           aria-labelledby="total-balance-heading"
-          className="rounded-xl border border-border bg-card px-4 py-4"
+          className="rounded-2xl bg-gradient-to-br from-primary to-primary/85 px-5 py-5 text-primary-foreground shadow-[var(--shadow-card)]"
         >
           <h2
             id="total-balance-heading"
-            className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
+            className="text-xs uppercase tracking-wider text-primary-foreground/70 mb-1.5"
           >
             Saldo total em contas
           </h2>
-          <Amount
-            value={totalBalance}
-            tone="account"
-            className="text-3xl font-bold"
-          />
+          <p className="text-[2rem] leading-none font-bold tabular-nums">
+            {totalBalance < 0 ? "−" : ""}
+            {formatBRL(Math.abs(totalBalance))}
+          </p>
         </section>
       ) : null}
 
@@ -96,7 +95,7 @@ export default async function DashboardPage() {
         >
           Resumo do mês
         </h2>
-        <div className="grid grid-cols-3 rounded-xl border border-border bg-card overflow-hidden">
+        <div className="grid grid-cols-3 surface overflow-hidden">
           <div className="flex flex-col items-center py-4 gap-1 border-r border-border">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Entradas
@@ -137,7 +136,7 @@ export default async function DashboardPage() {
               <Link
                 key={q.href}
                 href={q.href}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card min-h-[64px] py-3 text-[11px] font-medium text-center hover:bg-muted transition-colors"
+                className="surface flex flex-col items-center justify-center gap-1.5 min-h-[64px] py-3 text-[11px] font-medium text-center hover:bg-muted transition-colors"
               >
                 <Icon className="size-5 text-muted-foreground" aria-hidden />
                 <span className="leading-tight">{q.label}</span>
@@ -167,7 +166,7 @@ export default async function DashboardPage() {
           >
             Contas
           </h2>
-          <ul className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
+          <ul className="surface divide-y divide-border overflow-hidden">
             {accountBalances.map((a) => (
               <li key={a.id}>
                 <Link
@@ -223,7 +222,7 @@ export default async function DashboardPage() {
             description='Toque em "Lançar movimentação" para registrar a primeira.'
           />
         ) : (
-          <ul className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
+          <ul className="surface divide-y divide-border overflow-hidden">
             {recentTxs.map((tx) => (
               <li key={tx.id}>
                 <Link

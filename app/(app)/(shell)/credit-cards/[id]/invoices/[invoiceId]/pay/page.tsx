@@ -51,14 +51,14 @@ export default async function PayInvoicePage({
           </div>
         </header>
 
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30 p-4 flex items-center gap-3">
-          <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+        <div className="rounded-xl border border-income/30 bg-income/10 p-4 flex items-center gap-3">
+          <CheckCircle2 className="size-5 text-income shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <p className="text-sm font-semibold text-income">
               Fatura paga
             </p>
             {invoice.paid_at ? (
-              <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70">
+              <p className="text-xs text-income/70">
                 Em {formatBR(invoice.paid_at)} — {formatBRL(invoice.total_amount)}
               </p>
             ) : null}
@@ -66,7 +66,7 @@ export default async function PayInvoicePage({
         </div>
 
         {purchases.length > 0 ? (
-          <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+          <ul className="surface divide-y divide-border overflow-hidden">
             {purchases.map((p) => (
               <li
                 key={p.id}

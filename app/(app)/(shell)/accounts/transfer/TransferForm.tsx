@@ -82,7 +82,7 @@ export function TransferForm({ accounts, defaultDate }: Props) {
           value={fromAccountId}
           onChange={(e) => setFromAccountId(e.target.value)}
           className={cn(
-            "w-full h-12 px-3 rounded-md border border-input bg-background text-sm",
+            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring",
             fieldErrors.from_account_id ? "border-destructive" : "",
           )}
@@ -112,7 +112,7 @@ export function TransferForm({ accounts, defaultDate }: Props) {
           value={toAccountId}
           onChange={(e) => setToAccountId(e.target.value)}
           className={cn(
-            "w-full h-12 px-3 rounded-md border border-input bg-background text-sm",
+            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring",
             sameAccount || fieldErrors.to_account_id ? "border-destructive" : "",
           )}

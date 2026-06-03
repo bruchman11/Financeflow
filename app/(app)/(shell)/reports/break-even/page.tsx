@@ -103,13 +103,13 @@ export default async function BreakEvenPage({
 
       {/* Resultado */}
       <div className="px-4 py-6">
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="surface p-5 space-y-4">
           <div className="flex items-center gap-3">
             <div
               className={cn(
                 "size-10 rounded-full flex items-center justify-center",
                 reachedBreakEven
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                  ? "bg-income/15 text-income"
                   : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
               )}
             >
@@ -157,7 +157,7 @@ export default async function BreakEvenPage({
               className={cn(
                 "text-xs font-medium",
                 reachedBreakEven
-                  ? "text-emerald-700 dark:text-emerald-400"
+                  ? "text-income"
                   : "text-amber-700 dark:text-amber-400",
               )}
             >
@@ -171,7 +171,7 @@ export default async function BreakEvenPage({
 
       {/* Detalhe */}
       <div className="px-4">
-        <div className="rounded-xl border border-border bg-card divide-y divide-border">
+        <div className="surface divide-y divide-border">
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground uppercase tracking-wider">
               Despesas fixas no período

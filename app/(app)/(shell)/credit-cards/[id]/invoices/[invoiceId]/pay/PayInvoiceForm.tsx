@@ -46,7 +46,7 @@ export function PayInvoiceForm({
 
   return (
     <form action={formAction} className="space-y-5">
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
+      <div className="surface divide-y divide-border">
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">
             Fatura
@@ -79,7 +79,7 @@ export function PayInvoiceForm({
           required
           defaultValue={defaultAccountId ?? accounts[0]?.id ?? ""}
           className={cn(
-            "w-full h-12 px-3 rounded-md border border-input bg-background text-sm",
+            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring",
             fieldErrors.account_id ? "border-destructive" : "",
           )}

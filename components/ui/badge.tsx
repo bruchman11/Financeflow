@@ -8,11 +8,14 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-muted text-muted-foreground",
-        success: "bg-income/10 text-income",
-        danger: "bg-expense/10 text-expense",
-        warning: "bg-warning/10 text-warning",
-        info: "bg-info/10 text-info",
+        default: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
+        success:
+          "bg-income/10 text-income ring-1 ring-inset ring-income/20",
+        danger:
+          "bg-expense/10 text-expense ring-1 ring-inset ring-expense/20",
+        warning:
+          "bg-warning/10 text-warning ring-1 ring-inset ring-warning/25",
+        info: "bg-info/10 text-info ring-1 ring-inset ring-info/20",
         outline: "border border-border text-foreground",
       },
     },

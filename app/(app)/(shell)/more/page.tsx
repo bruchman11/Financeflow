@@ -25,7 +25,7 @@ export default async function MorePage() {
     <main className="flex-1 flex flex-col px-4 py-6 gap-6">
       <PageHeader eyebrow="Configurações" title="Mais" className="px-2" />
 
-      <section className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+      <section className="surface divide-y divide-border overflow-hidden">
         <LinkRow href="/accounts" icon={Wallet} label="Contas" />
         <LinkRow href="/calendar" icon={Calendar} label="Agenda" />
         <LinkRow href="/fixed-expenses" icon={Receipt} label="Despesas fixas" />
@@ -46,7 +46,7 @@ export default async function MorePage() {
         </form>
       </section>
 
-      <section className="rounded-lg border border-border bg-card overflow-hidden">
+      <section className="surface overflow-hidden">
         <form action={signOutAction}>
           <button
             type="submit"

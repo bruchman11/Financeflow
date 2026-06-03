@@ -49,7 +49,7 @@ export default async function CategoriesPage({
           description="Crie a primeira categoria para organizar suas movimentações."
         />
       ) : (
-        <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        <ul className="surface divide-y divide-border overflow-hidden">
           {flatten(tree).map((node) => (
             <CategoryRow key={node.id} node={node} />
           ))}
@@ -82,7 +82,7 @@ export default async function CategoriesPage({
           </div>
 
           {showArchived ? (
-            <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <ul className="surface divide-y divide-border overflow-hidden">
               {archivedRows.map((a) => (
                 <li key={a.id}>
                   <div className="flex items-center gap-3 px-4 py-3 min-h-[56px] opacity-70">

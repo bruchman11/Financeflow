@@ -111,7 +111,7 @@ export default async function CreditCardsPage({
           {inactive.length === 0 ? (
             <EmptyState compact title="Nenhum cartão inativo" />
           ) : (
-            <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <ul className="surface divide-y divide-border overflow-hidden">
               {inactive.map((c) => (
                 <li
                   key={c.id}

@@ -74,10 +74,10 @@ export function ImportForm() {
 
       {/* Resultado da importação anterior */}
       {state.ok === true && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30 p-4 space-y-2">
+        <div className="rounded-xl border border-income/30 bg-income/10 p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <CheckCircle2 className="size-4 text-income shrink-0" />
+            <p className="text-sm font-semibold text-income">
               {state.inserted} movimentação{state.inserted !== 1 ? "s" : ""} importada
               {state.inserted !== 1 ? "s" : ""}
               {state.skipped > 0 ? ` · ${state.skipped} ignorada${state.skipped !== 1 ? "s" : ""}` : ""}

@@ -152,7 +152,7 @@ export function CardForm({
           id="payment_account_id"
           name="payment_account_id"
           defaultValue={defaultValues?.payment_account_id ?? ""}
-          className="w-full h-12 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Não definida</option>
           {accounts.map((a) => (

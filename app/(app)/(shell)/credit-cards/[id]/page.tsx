@@ -9,6 +9,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   getCreditCard,
   listInvoicesByCard,
@@ -17,7 +18,6 @@ import {
 } from "@/lib/db/credit_cards";
 import { formatBRL } from "@/lib/format/currency";
 import { formatBR } from "@/lib/format/date";
-import { cn } from "@/lib/utils";
 
 const invoiceStatusLabel: Record<string, string> = {
   open: "Aberta",
@@ -26,11 +26,14 @@ const invoiceStatusLabel: Record<string, string> = {
   overdue: "Vencida",
 };
 
-const invoiceStatusStyle: Record<string, string> = {
-  open: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  closed: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  paid: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  overdue: "bg-destructive/10 text-destructive",
+const invoiceStatusVariant: Record<
+  string,
+  "info" | "warning" | "success" | "danger"
+> = {
+  open: "info",
+  closed: "warning",
+  paid: "success",
+  overdue: "danger",
 };
 
 export default async function CreditCardDetailPage({
@@ -104,7 +107,7 @@ export default async function CreditCardDetailPage({
             <InvoiceStatusBadge status={current.status} />
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="surface p-4 space-y-3">
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -150,7 +153,7 @@ export default async function CreditCardDetailPage({
               </p>
             </div>
           ) : (
-            <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <ul className="surface divide-y divide-border overflow-hidden">
               {currentPurchases.map((p) => (
                 <li key={p.id}>
                   <Link
@@ -184,7 +187,7 @@ export default async function CreditCardDetailPage({
                         {formatBRL(p.installment_amount)}
                       </span>
                       {p.payment_transaction_id ? (
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-income">
                           Paga
                         </span>
                       ) : null}
@@ -223,7 +226,7 @@ export default async function CreditCardDetailPage({
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground px-2">
             Outras faturas
           </h2>
-          <ul className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+          <ul className="surface divide-y divide-border overflow-hidden">
             {others.map((inv) => (
               <li key={inv.id}>
                 <Link
@@ -232,7 +235,7 @@ export default async function CreditCardDetailPage({
                 >
                   <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
                     {inv.status === "paid" ? (
-                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <CheckCircle2 className="size-4 text-income" />
                     ) : (
                       <CreditCard className="size-4 text-muted-foreground" />
                     )}
@@ -271,13 +274,11 @@ function formatRefMonth(refMonth: string): string {
 
 function InvoiceStatusBadge({ status }: { status: CreditCardInvoiceRow["status"] }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center h-5 px-2 rounded-full text-[10px] font-semibold uppercase tracking-wider",
-        invoiceStatusStyle[status],
-      )}
+    <Badge
+      variant={invoiceStatusVariant[status]}
+      className="uppercase tracking-wider"
     >
       {invoiceStatusLabel[status]}
-    </span>
+    </Badge>
   );
 }

@@ -65,7 +65,7 @@ export function AdjustBalanceForm({
   return (
     <form action={formAction} className="space-y-5">
       {/* Card com saldos */}
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
+      <div className="surface divide-y divide-border">
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">
             Conta

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Building2, ChevronDown } from "lucide-react";
 import type { UserCompany } from "@/lib/db/companies";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 /**
  * Barra superior fixa do shell mobile.
@@ -29,6 +30,7 @@ export function AppHeader({ company }: { company: UserCompany }) {
           </div>
           <ChevronDown className="size-4 text-muted-foreground shrink-0" />
         </Link>
+        <ThemeToggle />
       </div>
     </header>
   );

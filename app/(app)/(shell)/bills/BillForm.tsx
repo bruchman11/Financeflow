@@ -184,7 +184,7 @@ export function BillForm({
           id="category_id"
           name="category_id"
           defaultValue={defaultValues?.category_id ?? ""}
-          className="w-full h-12 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Sem categoria</option>
           {expenseCategories.map((c) => (
@@ -198,7 +198,7 @@ export function BillForm({
 
       {/* Avançado: códigos de barras e linha digitável */}
       {showAdvanced ? (
-        <div className="space-y-3 rounded-lg border border-border bg-card/50 px-3 py-3">
+        <div className="space-y-3 surface/50 px-3 py-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Identificação do boleto

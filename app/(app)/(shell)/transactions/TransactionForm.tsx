@@ -200,7 +200,7 @@ export function TransactionForm({
           value={account}
           onChange={(e) => setAccount(e.target.value)}
           className={cn(
-            "w-full h-12 px-3 rounded-md border border-input bg-background text-sm",
+            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring",
             fieldErrors.account_id ? "border-destructive" : "",
           )}
@@ -227,7 +227,7 @@ export function TransactionForm({
           name="category_id"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full h-12 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Sem categoria</option>
           {filteredCategories.map((c) => (

@@ -64,7 +64,7 @@ export default async function ReportsHubPage() {
         >
           Resumo do mês
         </h2>
-        <div className="grid grid-cols-3 rounded-xl border border-border bg-card overflow-hidden">
+        <div className="grid grid-cols-3 surface overflow-hidden">
           <div className="flex flex-col items-center py-4 gap-1 border-r border-border">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Entradas
@@ -98,7 +98,7 @@ export default async function ReportsHubPage() {
         >
           Relatórios
         </h2>
-        <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        <div className="surface divide-y divide-border overflow-hidden">
           {reports.map((r) => (
             <LinkRow
               key={r.href}

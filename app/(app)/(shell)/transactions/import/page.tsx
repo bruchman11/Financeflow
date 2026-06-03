@@ -20,7 +20,7 @@ export default function ImportTransactionsPage() {
       </header>
 
       {/* Instruções */}
-      <section className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <section className="surface p-4 space-y-3">
         <h2 className="text-sm font-semibold">Como importar</h2>
         <ol className="space-y-1.5 pl-4 list-decimal">
           <li className="text-sm text-muted-foreground">
