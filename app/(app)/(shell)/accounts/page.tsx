@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArchiveRestore, ArrowLeftRight, Pencil, Plus, Wallet } from "lucide-react";
+import { ArchiveRestore, ArrowLeftRight, Plus, Wallet } from "lucide-react";
 
 export const metadata: Metadata = { title: "Contas — FinanceFlow" };
 import { listAccounts } from "@/lib/db/accounts";
+import { getAccountBalances } from "@/lib/db/dashboard";
 import { accountKindLabels } from "@/lib/validation/account";
-import { formatBRL } from "@/lib/format/currency";
+import { Amount } from "@/components/ui/amount";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { toggleAccountArchivedAction } from "./actions";
@@ -18,7 +19,11 @@ export default async function AccountsPage({
   const params = await searchParams;
   const showArchived = params.archived === "1";
 
-  const accounts = await listAccounts({ includeArchived: true });
+  const [accounts, balances] = await Promise.all([
+    listAccounts({ includeArchived: true }),
+    getAccountBalances(),
+  ]);
+  const balanceMap = new Map(balances.map((b) => [b.id, b.currentBalance]));
   const active = accounts.filter((a) => !a.is_archived);
   const archived = accounts.filter((a) => a.is_archived);
 
@@ -55,13 +60,13 @@ export default async function AccountsPage({
                     {a.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {accountKindLabels[a.kind]} · saldo inicial{" "}
-                    {formatBRL(a.opening_balance)}
+                    {accountKindLabels[a.kind]}
                   </p>
                 </div>
-                <Pencil
-                  className="size-4 text-muted-foreground shrink-0"
-                  aria-label="Editar"
+                <Amount
+                  value={balanceMap.get(a.id) ?? Number(a.opening_balance)}
+                  tone="account"
+                  className="text-sm font-semibold shrink-0"
                 />
               </Link>
             </li>
