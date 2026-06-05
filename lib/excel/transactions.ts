@@ -30,7 +30,9 @@ export function buildExportBuffer(
     Tipo: tx.type === "income" ? "Entrada" : "Saída",
     Valor: formatNumber(tx.amount),
     Conta: tx.accounts?.name ?? "",
-    Categoria: tx.categories?.name ?? "",
+    Categoria: tx.categories
+      ? `${tx.categories.code} ${tx.categories.name}`
+      : "",
     Descrição: tx.description ?? "",
   }));
 
@@ -42,7 +44,7 @@ export function buildExportBuffer(
     { wch: 8 },  // Tipo
     { wch: 14 }, // Valor
     { wch: 22 }, // Conta
-    { wch: 22 }, // Categoria
+    { wch: 30 }, // Categoria
     { wch: 40 }, // Descrição
   ];
 

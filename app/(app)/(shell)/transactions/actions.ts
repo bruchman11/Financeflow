@@ -247,6 +247,25 @@ export async function importTransactionsAction(
   const categoryByName = new Map(
     categories.map((c) => [c.name.trim().toLowerCase(), c]),
   );
+  const categoryByCode = new Map(categories.map((c) => [c.code, c]));
+
+  // Resolve a categoria por código (quando vem "06.05.01 Nome") ou por nome.
+  function resolveCategory(raw: string) {
+    const s = raw.trim();
+    const m = s.match(/^(\d{1,2}(?:\.\d{1,2}){0,2})\s+(.+)$/);
+    if (m) {
+      const padded = m[1]
+        .split(".")
+        .map((p) => p.padStart(2, "0"))
+        .join(".");
+      return (
+        categoryByCode.get(m[1]) ??
+        categoryByCode.get(padded) ??
+        categoryByName.get(m[2].trim().toLowerCase())
+      );
+    }
+    return categoryByName.get(s.toLowerCase());
+  }
 
   type TxInsert = {
     company_id: string;
@@ -269,7 +288,7 @@ export async function importTransactionsAction(
       continue;
     }
     const category = pr.categoryName
-      ? categoryByName.get(pr.categoryName.toLowerCase())
+      ? resolveCategory(pr.categoryName)
       : undefined;
     if (pr.categoryName && !category) {
       rowErrors.push({
