@@ -90,6 +90,15 @@ export default async function TransactionsPage({
       filters.regime === "accrual",
   );
 
+  // Export respeita o período efetivo + filtros ativos.
+  const exportParams = new URLSearchParams({ from, to });
+  if (filters.accountId) exportParams.set("account", filters.accountId);
+  if (filters.categoryId) exportParams.set("category", filters.categoryId);
+  if (filters.type) exportParams.set("type", filters.type);
+  if (filters.regime === "accrual") exportParams.set("regime", "accrual");
+  if (filters.q) exportParams.set("q", filters.q);
+  const exportHref = `/api/transactions/export?${exportParams.toString()}`;
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       {/* Filtros inline */}
@@ -108,7 +117,7 @@ export default async function TransactionsPage({
       {/* Exportar / importar */}
       <div className="flex items-center justify-end gap-4 px-4 py-2 border-b border-border bg-background">
         <a
-          href={`/api/transactions/export?mes=${from.slice(0, 7)}`}
+          href={exportHref}
           download
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >

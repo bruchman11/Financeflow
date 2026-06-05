@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveCompany, getUser } from "@/lib/auth/current";
-import { listTransactions } from "@/lib/db/transactions";
+import {
+  listTransactionsPage,
+  type TransactionFilters,
+  type TransactionWithRefs,
+} from "@/lib/db/transactions";
 import { buildExportBuffer, buildTemplateBuffer } from "@/lib/excel/transactions";
 
 function currentYearMonth(): string {
@@ -18,8 +22,9 @@ function monthRange(mes: string): { from: string; to: string } {
   };
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 export async function GET(req: NextRequest) {
-  // Auth
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
@@ -32,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
 
-  // Modo template — retorna planilha vazia com cabeçalho + exemplo
+  // Modo template — planilha vazia com cabeçalho + exemplo
   if (searchParams.get("template") === "1") {
     const buffer = buildTemplateBuffer();
     return new NextResponse(new Uint8Array(buffer as Buffer), {
@@ -45,14 +50,45 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Exportação do período
-  const mes =
-    /^\d{4}-\d{2}$/.test(searchParams.get("mes") ?? "")
+  // Período: from/to explícitos > mes (compat) > mês corrente
+  const fromRaw = searchParams.get("from");
+  const toRaw = searchParams.get("to");
+  let from: string;
+  let to: string;
+  if (ISO_DATE.test(fromRaw ?? "") && ISO_DATE.test(toRaw ?? "")) {
+    from = fromRaw!;
+    to = toRaw!;
+  } else {
+    const mes = /^\d{4}-\d{2}$/.test(searchParams.get("mes") ?? "")
       ? (searchParams.get("mes") as string)
       : currentYearMonth();
+    ({ from, to } = monthRange(mes));
+  }
 
-  const { from, to } = monthRange(mes);
-  const transactions = await listTransactions({ from, to });
+  const typeParam = searchParams.get("type");
+  const filters: TransactionFilters = {
+    from,
+    to,
+    regime: searchParams.get("regime") === "accrual" ? "accrual" : "cash",
+    accountId: searchParams.get("account") || null,
+    categoryId: searchParams.get("category") || null,
+    type:
+      typeParam === "income" || typeParam === "expense" ? typeParam : null,
+    q: searchParams.get("q") || null,
+  };
+
+  // Busca TODAS as linhas do período/filtros, paginando (sem limite de 200/1000).
+  const transactions: TransactionWithRefs[] = [];
+  let cursor: string | null = null;
+  do {
+    const page = await listTransactionsPage({
+      ...filters,
+      pageSize: 1000,
+      cursor,
+    });
+    transactions.push(...page.rows);
+    cursor = page.nextCursor;
+  } while (cursor && transactions.length < 100000);
 
   const buffer = buildExportBuffer(transactions);
 
@@ -60,7 +96,7 @@ export async function GET(req: NextRequest) {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="movimentacoes-${mes}.xlsx"`,
+      "Content-Disposition": `attachment; filename="movimentacoes-${from}_a_${to}.xlsx"`,
     },
   });
 }
