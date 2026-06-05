@@ -77,13 +77,15 @@ export async function GET(req: NextRequest) {
     q: searchParams.get("q") || null,
   };
 
-  // Busca TODAS as linhas do período/filtros, paginando (sem limite de 200/1000).
+  // Busca TODAS as linhas do período/filtros, paginando por cursor.
+  // pageSize deve ficar abaixo do teto de linhas do PostgREST (~1000): a query
+  // pede pageSize+1 p/ detectar a próxima página, então 500+1 nunca é truncado.
   const transactions: TransactionWithRefs[] = [];
   let cursor: string | null = null;
   do {
     const page = await listTransactionsPage({
       ...filters,
-      pageSize: 1000,
+      pageSize: 500,
       cursor,
     });
     transactions.push(...page.rows);
