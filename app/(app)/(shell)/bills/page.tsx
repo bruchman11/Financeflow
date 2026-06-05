@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CopyBarcodeButton } from "@/components/bills/CopyBarcodeButton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { listBills, type BillWithRefs } from "@/lib/db/bills";
 import { classifyDue, dueBucketLabels, type DueBucket } from "@/lib/db/fixed_expenses";
@@ -189,6 +190,7 @@ export default async function BillsPage({
 }
 
 function BillRow({ bill, bucket }: { bill: BillWithRefs; bucket: DueBucket }) {
+  const billCode = bill.digitable_line || bill.barcode;
   return (
     <li>
       <div className="flex flex-col gap-2 px-4 py-3 min-h-[72px]">
@@ -219,6 +221,8 @@ function BillRow({ bill, bucket }: { bill: BillWithRefs; bucket: DueBucket }) {
                 : `Vence ${formatBR(bill.due_date)}`}
           </Badge>
           <div className="flex-1" />
+
+          {billCode ? <CopyBarcodeButton code={billCode} /> : null}
 
           <Link
             href={`/bills/${bill.id}/pay`}
