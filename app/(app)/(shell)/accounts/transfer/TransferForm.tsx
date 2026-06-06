@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { ArrowDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -75,24 +76,20 @@ export function TransferForm({ accounts, defaultDate }: Props) {
       {/* De */}
       <div className="space-y-1.5">
         <Label htmlFor="from_account_id">De</Label>
-        <select
+        <NativeSelect
           id="from_account_id"
           name="from_account_id"
           required
           value={fromAccountId}
           onChange={(e) => setFromAccountId(e.target.value)}
-          className={cn(
-            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            fieldErrors.from_account_id ? "border-destructive" : "",
-          )}
+          aria-invalid={Boolean(fieldErrors.from_account_id) || undefined}
         >
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Seta visual */}
@@ -105,7 +102,7 @@ export function TransferForm({ accounts, defaultDate }: Props) {
       {/* Para */}
       <div className="space-y-1.5">
         <Label htmlFor="to_account_id">Para</Label>
-        <select
+        <NativeSelect
           id="to_account_id"
           name="to_account_id"
           required
@@ -123,7 +120,7 @@ export function TransferForm({ accounts, defaultDate }: Props) {
               {a.id === fromAccountId ? " (origem)" : ""}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         {sameAccount ? (
           <p className="text-sm text-destructive">
             Origem e destino devem ser diferentes.

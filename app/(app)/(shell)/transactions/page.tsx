@@ -14,8 +14,10 @@ import {
 import { formatBRL } from "@/lib/format/currency";
 import { currentYearMonth, monthRange } from "@/lib/format/month";
 import { Amount } from "@/components/ui/amount";
-import type { FiltersState } from "@/components/filters/FiltersDrawer";
-import { TransactionFilters } from "@/components/filters/TransactionFilters";
+import {
+  TransactionFilters,
+  type FiltersState,
+} from "@/components/filters/TransactionFilters";
 import { TransactionsList } from "./TransactionsList";
 
 const PAGE_SIZE = 25;

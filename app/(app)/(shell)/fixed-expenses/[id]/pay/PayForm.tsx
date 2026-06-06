@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,23 +117,19 @@ export function PayForm({
       {/* Conta */}
       <div className="space-y-1.5">
         <Label htmlFor="account_id">Conta de pagamento</Label>
-        <select
+        <NativeSelect
           id="account_id"
           name="account_id"
           required
           defaultValue={defaultAccount}
-          className={cn(
-            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            fieldErrors.account_id ? "border-destructive" : "",
-          )}
+          aria-invalid={Boolean(fieldErrors.account_id) || undefined}
         >
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Data do pagamento */}

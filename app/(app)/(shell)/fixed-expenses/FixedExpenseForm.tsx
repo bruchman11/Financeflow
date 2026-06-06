@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,7 +123,7 @@ export function FixedExpenseForm({
       {/* Frequência */}
       <div className="space-y-1.5">
         <Label htmlFor="frequency">Frequência</Label>
-        <select
+        <NativeSelect
           id="frequency"
           name="frequency"
           required
@@ -130,14 +131,13 @@ export function FixedExpenseForm({
           onChange={(e) =>
             setFrequency(e.target.value as FixedExpenseFrequency)
           }
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {FREQUENCIES.map((f) => (
             <option key={f} value={f}>
               {frequencyLabels[f]}
             </option>
           ))}
-        </select>
+        </NativeSelect>
 
         {frequency === "custom" ? (
           <div className="pt-2">
@@ -190,11 +190,10 @@ export function FixedExpenseForm({
           Categoria{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <select
+        <NativeSelect
           id="category_id"
           name="category_id"
           defaultValue={defaultValues?.category_id ?? ""}
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Sem categoria</option>
           {expenseCategories.map((c) => (
@@ -203,7 +202,7 @@ export function FixedExpenseForm({
               {c.code} {c.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Conta padrão */}
@@ -212,11 +211,10 @@ export function FixedExpenseForm({
           Conta padrão{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <select
+        <NativeSelect
           id="default_account_id"
           name="default_account_id"
           defaultValue={defaultValues?.default_account_id ?? ""}
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Não definida</option>
           {accounts.map((a) => (
@@ -224,7 +222,7 @@ export function FixedExpenseForm({
               {a.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         <p className="text-xs text-muted-foreground">
           Pré-seleciona esta conta ao informar pagamento.
         </p>

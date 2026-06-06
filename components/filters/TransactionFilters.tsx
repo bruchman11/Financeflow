@@ -8,7 +8,24 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { todayISO, addDaysISO, parseISODate } from "@/lib/format/date";
 import { currentYearMonth, monthRange, adjacentMonth } from "@/lib/format/month";
-import type { FiltersState, FilterAccount, FilterCategory } from "./FiltersDrawer";
+
+export type FiltersState = {
+  from: string;
+  to: string;
+  accountId: string;
+  categoryId: string;
+  type: "" | "income" | "expense";
+  regime: "cash" | "accrual";
+  q: string;
+};
+
+export type FilterAccount = { id: string; name: string };
+export type FilterCategory = {
+  id: string;
+  code: string;
+  name: string;
+  level: number;
+};
 
 type Props = {
   basePath: string;

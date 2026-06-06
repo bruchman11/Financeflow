@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -148,11 +149,10 @@ export function CardForm({
           Conta padrão de pagamento{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <select
+        <NativeSelect
           id="payment_account_id"
           name="payment_account_id"
           defaultValue={defaultValues?.payment_account_id ?? ""}
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Não definida</option>
           {accounts.map((a) => (
@@ -160,7 +160,7 @@ export function CardForm({
               {a.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="space-y-1.5">

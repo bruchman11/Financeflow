@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -154,10 +155,9 @@ export function PurchaseForm({ cardId, categories, defaultDate }: Props) {
           Categoria{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <select
+        <NativeSelect
           id="category_id"
           name="category_id"
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Sem categoria</option>
           {expenseCategories.map((c) => (
@@ -166,7 +166,7 @@ export function PurchaseForm({ cardId, categories, defaultDate }: Props) {
               {c.code} {c.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="space-y-1.5">

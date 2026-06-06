@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,7 +75,7 @@ export function AccountForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="kind">Tipo</Label>
-        <select
+        <NativeSelect
           id="kind"
           name="kind"
           required
@@ -91,7 +92,7 @@ export function AccountForm({
               {accountKindLabels[k]}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         {fieldErrors.kind ? (
           <p className="text-sm text-destructive">{fieldErrors.kind}</p>
         ) : null}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NativeSelect } from "@/components/ui/native-select";
 import { TrendingUp } from "lucide-react";
 import { listAccounts } from "@/lib/db/accounts";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -65,12 +66,10 @@ export default async function CashFlowPage({
         </label>
         <form action="" className="contents">
           <input type="hidden" name="mes" value={mes} />
-          <select
+          <NativeSelect
             id="account"
             name="account"
             defaultValue={accountId ?? ""}
-            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-            // Auto-submit ao mudar via JS nativo do form
           >
             <option value="">Todas (consolidado)</option>
             {accounts.map((a) => (
@@ -78,7 +77,7 @@ export default async function CashFlowPage({
                 {a.name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </form>
       </div>
 

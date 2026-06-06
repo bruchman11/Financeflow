@@ -6,6 +6,7 @@ import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { cn } from "@/lib/utils";
 import {
   TRANSACTION_TYPES,
@@ -193,24 +194,20 @@ export function TransactionForm({
       {/* Conta */}
       <div className="space-y-1.5">
         <Label htmlFor="account_id">Conta</Label>
-        <select
+        <NativeSelect
           id="account_id"
           name="account_id"
           required
           value={account}
           onChange={(e) => setAccount(e.target.value)}
-          className={cn(
-            "w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            fieldErrors.account_id ? "border-destructive" : "",
-          )}
+          aria-invalid={Boolean(fieldErrors.account_id) || undefined}
         >
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         {fieldErrors.account_id ? (
           <p className="text-sm text-destructive">{fieldErrors.account_id}</p>
         ) : null}
@@ -222,12 +219,11 @@ export function TransactionForm({
           Categoria{" "}
           <span className="text-muted-foreground">(opcional)</span>
         </Label>
-        <select
+        <NativeSelect
           id="category_id"
           name="category_id"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Sem categoria</option>
           {filteredCategories.map((c) => (
@@ -236,7 +232,7 @@ export function TransactionForm({
               {c.code} {c.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Data de caixa + competência (colapsável) */}
