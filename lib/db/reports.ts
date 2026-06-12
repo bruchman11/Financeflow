@@ -1,5 +1,10 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  buildCategoryTree,
+  listCategories,
+  type CategoryNode,
+} from "@/lib/db/categories";
 import type { DreType } from "@/lib/types/database";
 
 // ── Fluxo de caixa ────────────────────────────────────────────────────────────
@@ -84,17 +89,19 @@ export async function getCashFlow({
 
 // ── DRE ───────────────────────────────────────────────────────────────────────
 
-export type DreCategoryTotal = {
+export type DreTreeNode = {
   id: string;
   code: string;
   name: string;
   total: number;
+  children: DreTreeNode[];
 };
 
 export type DreNode = {
   dre_type: DreType;
   total: number;
-  categories: DreCategoryTotal[];
+  /** Árvore de categorias com subtotal acumulado por nó (roll-up). */
+  tree: DreTreeNode[];
 };
 
 export type DreReport = {
@@ -108,7 +115,7 @@ export type DreReport = {
 };
 
 function emptyNode(dre_type: DreType): DreNode {
-  return { dre_type, total: 0, categories: [] };
+  return { dre_type, total: 0, tree: [] };
 }
 
 /**
@@ -237,17 +244,32 @@ export async function getDre({
     nodes[cat.dre_type].total += abs;
   }
 
-  // Distribui categorias nos nodes ordenadas por code
-  for (const [id, cat] of byCategory.entries()) {
-    nodes[cat.dre_type].categories.push({
-      id,
-      code: cat.code,
-      name: cat.name,
-      total: cat.total,
-    });
+  // Monta a árvore por dre_type com roll-up (subtotal = próprio + Σ filhos).
+  // includeArchived: garante que lançamentos em categorias arquivadas ainda
+  // apareçam na árvore (senão o subtotal não bateria com o total da seção).
+  const allCats = await listCategories({ includeArchived: true });
+
+  function toTreeNode(c: CategoryNode): DreTreeNode {
+    const children = c.children.map(toTreeNode).filter((n) => n.total !== 0);
+    const own = byCategory.get(c.id)?.total ?? 0;
+    const total = own + children.reduce((s, n) => s + n.total, 0);
+    return { id: c.id, code: c.code, name: c.name, total, children };
   }
-  for (const node of Object.values(nodes)) {
-    node.categories.sort((a, b) => a.code.localeCompare(b.code));
+
+  for (const dt of Object.keys(nodes) as DreType[]) {
+    const cats = allCats.filter((c) => c.dre_type === dt);
+    let roots = buildCategoryTree(cats)
+      .map(toTreeNode)
+      .filter((n) => n.total !== 0);
+    // Colapsa raiz de nível 1 redundante (ex.: "03") p/ abrir direto nos subgrupos.
+    while (
+      roots.length === 1 &&
+      roots[0].children.length > 0 &&
+      !roots[0].code.includes(".")
+    ) {
+      roots = roots[0].children;
+    }
+    nodes[dt].tree = roots;
   }
 
   const grossProfit = nodes.revenue.total - nodes.cost.total;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { formatBRL } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
-import type { DreNode } from "@/lib/db/reports";
+import type { DreNode, DreTreeNode } from "@/lib/db/reports";
 
 type Props = {
   label: string;
@@ -15,7 +15,7 @@ type Props = {
 
 export function DreSection({ label, node, sign, revenueTotal }: Props) {
   const [open, setOpen] = useState(false);
-  const hasChildren = node.categories.length > 0;
+  const hasChildren = node.tree.length > 0;
   const pctOfRevenue =
     revenueTotal > 0 ? (node.total / revenueTotal) * 100 : null;
 
@@ -59,34 +59,96 @@ export function DreSection({ label, node, sign, revenueTotal }: Props) {
       </button>
 
       {open && hasChildren ? (
-        <ul className="bg-muted/30 divide-y divide-border">
-          {node.categories.map((c) => {
-            const childPct =
-              revenueTotal > 0 ? (c.total / revenueTotal) * 100 : null;
-            return (
-              <li
-                key={c.id}
-                className="flex items-center gap-2 px-4 py-2 min-h-[40px]"
-                style={{ paddingLeft: `${20 + (c.code.split(".").length - 1) * 16}px` }}
-              >
-                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                  {c.code}
-                </span>
-                <span className="flex-1 text-xs truncate">{c.name}</span>
-                {childPct !== null ? (
-                  <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                    {childPct.toFixed(1)}%
-                  </span>
-                ) : null}
-                <span className="text-xs font-medium tabular-nums shrink-0">
-                  {formatBRL(c.total)}
-                </span>
-              </li>
-            );
-          })}
+        <ul className="bg-muted/30">
+          {node.tree.map((child) => (
+            <DreTreeRow
+              key={child.id}
+              node={child}
+              depth={0}
+              revenueTotal={revenueTotal}
+            />
+          ))}
         </ul>
       ) : null}
     </div>
+  );
+}
+
+/** Linha recursiva da árvore: total acumulado por nó, expansível por clique. */
+function DreTreeRow({
+  node,
+  depth,
+  revenueTotal,
+}: {
+  node: DreTreeNode;
+  depth: number;
+  revenueTotal: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasChildren = node.children.length > 0;
+  const pct = revenueTotal > 0 ? (node.total / revenueTotal) * 100 : null;
+  const padLeft = 16 + depth * 16;
+
+  return (
+    <li className="border-t border-border/60 first:border-t-0">
+      <button
+        type="button"
+        onClick={() => hasChildren && setOpen((o) => !o)}
+        disabled={!hasChildren}
+        className={cn(
+          "w-full flex items-center gap-2 pr-4 py-2 min-h-[40px] text-left transition-colors",
+          hasChildren ? "hover:bg-muted/60" : "",
+        )}
+        style={{ paddingLeft: `${padLeft}px` }}
+      >
+        {hasChildren ? (
+          open ? (
+            <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+          )
+        ) : (
+          <span className="size-3.5 shrink-0" />
+        )}
+        <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+          {node.code}
+        </span>
+        <span
+          className={cn(
+            "flex-1 truncate text-xs",
+            hasChildren ? "font-medium" : "",
+          )}
+        >
+          {node.name}
+        </span>
+        {pct !== null ? (
+          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+            {pct.toFixed(1)}%
+          </span>
+        ) : null}
+        <span
+          className={cn(
+            "text-xs tabular-nums shrink-0",
+            hasChildren ? "font-semibold" : "font-medium",
+          )}
+        >
+          {formatBRL(node.total)}
+        </span>
+      </button>
+
+      {open && hasChildren ? (
+        <ul>
+          {node.children.map((c) => (
+            <DreTreeRow
+              key={c.id}
+              node={c}
+              depth={depth + 1}
+              revenueTotal={revenueTotal}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </li>
   );
 }
 
