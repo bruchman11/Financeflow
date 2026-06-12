@@ -26,7 +26,9 @@ export const integrationCreateTxSchema = z.object({
   occurred_on: isoDate.optional().nullable(),
   category: z.string().optional().nullable(),
   description: z.string().max(255).optional().nullable(),
-  client_request_id: z.uuid().optional().nullable(),
+  // Qualquer id estável (ex.: o wamid do WhatsApp). O servidor converte para
+  // um UUID determinístico (ver stableUuid) — mantém a idempotência.
+  client_request_id: z.string().min(1).max(200).optional().nullable(),
 });
 
 export type IntegrationCreateTxInput = z.infer<

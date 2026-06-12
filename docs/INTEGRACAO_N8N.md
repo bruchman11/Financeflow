@@ -66,7 +66,7 @@ Erros: `401` sem/má chave · `403` telefone fora da allowlist · `422` validaç
   "category": "05.07.02",            // opcional: código, "código nome" ou nome
   "occurred_on": "2026-06-05",       // opcional (AAAA-MM-DD); default: hoje
   "description": "Entrega motoboy",  // opcional
-  "client_request_id": "<uuid>"      // opcional, mas RECOMENDADO (idempotência)
+  "client_request_id": "wamid.HBg..."  // opcional, RECOMENDADO: id estável da msg (idempotência)
 }
 ```
 Resposta `201` (ou `200` se já existia o mesmo `client_request_id`):
@@ -75,8 +75,9 @@ Resposta `201` (ou `200` se já existia o mesmo `client_request_id`):
   "transaction": { "id": "...", "type": "expense", "amount": "150.00", "account": "Mercado Pago", "category": "05.07.02 Entregas Motoboy", "occurred_on": "2026-06-05" },
   "resumo": "Saída de R$ 150,00 em Mercado Pago · 05.07.02 Entregas Motoboy · 05/06/2026" }
 ```
-> **Idempotência:** envie sempre um `client_request_id` estável por mensagem (ex.: um UUID
-> derivado do ID da mensagem do WhatsApp). Reenvios não duplicam.
+> **Idempotência:** envie um `client_request_id` **estável por mensagem** — pode ser o próprio
+> `messages[0].id` (wamid) do WhatsApp. O servidor converte para um UUID determinístico
+> (UUIDv5), então reenvios/retentativas **não duplicam**.
 
 ### GET `/context?phone=...` — contas + categorias
 Retorna `{ accounts:[{id,name,kind}], categories:[{code,name,dre_type}] }`.
@@ -132,8 +133,9 @@ curl -X POST https://SEU-APP.vercel.app/api/integrations/transactions \
    > Se faltar dado essencial, peça ao usuário."
 5. **Enviar confirmação no WhatsApp**: "Confirmar? {{ resumo }}" (monte um resumo legível).
 6. **Aguardar resposta** (nó *Wait* ou um 2º webhook por conversa). Se **sim** →
-   **HTTP Request → POST `/transactions`** com os campos + `client_request_id` = UUID derivado
-   do `messages[0].id`. Responda o sucesso (`resumo`). Se **não** → peça correção/descarte.
+   **HTTP Request → POST `/transactions`** com os campos + `client_request_id` = `messages[0].id`
+   (o wamid, direto — o servidor cuida do UUID). Responda o sucesso (`resumo`). Se **não** →
+   peça correção/descarte.
 
 ## 5. Workflow B no n8n — chat sobre os dados
 

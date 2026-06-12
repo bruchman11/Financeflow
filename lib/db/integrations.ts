@@ -2,6 +2,7 @@ import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatBRL } from "@/lib/format/currency";
 import { formatBR, todayISO } from "@/lib/format/date";
+import { stableUuid } from "@/lib/integrations/uuid";
 import type { IntegrationCreateTxInput } from "@/lib/validation/integration";
 
 /** Erro com status HTTP para a rota mapear na resposta. */
@@ -112,6 +113,9 @@ export async function createTransaction(
   }
 
   const occurredOn = input.occurred_on || todayISO();
+  const rid = input.client_request_id
+    ? stableUuid(input.client_request_id)
+    : null;
 
   const values = {
     company_id: companyId,
@@ -121,7 +125,7 @@ export async function createTransaction(
     amount: input.amount,
     description: input.description ?? null,
     occurred_on: occurredOn,
-    client_request_id: input.client_request_id ?? null,
+    client_request_id: rid,
     created_by: userId,
     kind: "regular" as const,
   };
@@ -139,13 +143,13 @@ export async function createTransaction(
     // Violação de unicidade em client_request_id → idempotência: retorna o existente.
     if (
       (error.code === "23505" || /duplicate key/i.test(error.message)) &&
-      input.client_request_id
+      rid
     ) {
       const { data: existing } = await supabase
         .from("transactions")
         .select("id")
         .eq("company_id", companyId)
-        .eq("client_request_id", input.client_request_id)
+        .eq("client_request_id", rid)
         .maybeSingle();
       if (existing) {
         txId = existing.id;
